@@ -65,7 +65,7 @@ public class Patient {
 	private String conditionURL = null;				//12 in patientRecords String array element
 	private static ArrayList<String[]> patientRecords; // = new List<String[]>(12);
 	private static File recordsFile;// = new File();
-
+	public static final int ELEMENTS = 13;			//number of elements in the arraylist
 
 	//instance constructors:
 	/**
@@ -114,7 +114,12 @@ public class Patient {
 
 	}
 
-
+	//getters:
+	
+	public static ArrayList<String[]> getPatientRecords() {
+		return patientRecords;
+	}
+	
 	//setters:
 	/**
 	 * Sets first and last name of patient, throws an exception if the initial character
@@ -471,7 +476,7 @@ public class Patient {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	private static void restorePreviousFile(File recordsFile) throws IOException, FileNotFoundException {
+	public static void restorePreviousFile(File recordsFile) throws IOException, FileNotFoundException {
 
 		BufferedReader fr = new BufferedReader(new FileReader(recordsFile.getPath() + ".back"));
 		FileWriter fw = new FileWriter(recordsFile);
@@ -524,7 +529,7 @@ public class Patient {
 		return result;
 	}
 
-	//driver method, only used for convenience
+	//driver method, only used for testing
 	@Deprecated
 	public static void driver() {
 

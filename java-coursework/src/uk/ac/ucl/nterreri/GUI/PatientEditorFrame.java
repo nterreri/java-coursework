@@ -11,32 +11,61 @@ import javax.swing.GroupLayout.Alignment;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.JTabbedPane;
 import javax.swing.JEditorPane;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.border.LineBorder;
+
+import uk.ac.ucl.nterreri.task3.Patient;
+
 import java.awt.Color;
 import javax.swing.JToggleButton;
 import javax.swing.JTextPane;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JScrollPane;
 
-public class PatientEditorFrame extends JFrame {
+public class PatientEditorFrame extends JFrame implements ActionListener{
 
+	private Patient patient;
+	private int indexInArrayList;
 	private JPanel contentPane;
-	private JTextField textField;
-	private JTextField textField_1;
-	private JTextField textField_2;
-	private JTextField textField_3;
-	private JTextField textField_4;
-
+	private JTextField textFirstName;
+	private JTextField textLastName;
+	private JTextField textDOB;
+	private JTextField textPhone;
+	private JTextField textAddress;
+	private JTextArea txtAreaCondition;
+	private JTextArea txtAreaAppointments;
+	private JTextArea txtAreaComments;
+	private JTextArea txtAreaBilling;
+	private JButton btnSaveButton;
+	private JToggleButton tglbtnToggleEditMode;
+	private JComboBox comboBox;
+	private JLabel lblNewLabel;
+	private JLabel label;
+	private JScrollPane scrollPaneCondition;
+	private JScrollPane scrollPaneAppointments;
+	private JScrollPane scrollPaneBilling;
+	private JScrollPane scrollPaneComments;
+	
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	/*public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -47,25 +76,32 @@ public class PatientEditorFrame extends JFrame {
 				}
 			}
 		});
-	}
+	}*/
 
 	/**
 	 * Create the frame.
 	 */
-	public PatientEditorFrame() {
+	public PatientEditorFrame(Patient patient, int indexInArrayList) {
+		this.indexInArrayList = indexInArrayList;
+		this.patient = patient;
+		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 827, 629);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		
-		textField = new JTextField();
-		textField.setBounds(23, 93, 168, 19);
-		textField.setColumns(10);
+		textFirstName = new JTextField();
+		textFirstName.setEditable(false);
+		textFirstName.setBounds(23, 93, 168, 19);
+		textFirstName.setColumns(10);
+		textFirstName.setText(patient.getFName());
 		
-		textField_1 = new JTextField();
-		textField_1.setBounds(251, 93, 202, 19);
-		textField_1.setColumns(10);
+		textLastName = new JTextField();
+		textLastName.setEditable(false);
+		textLastName.setBounds(251, 93, 202, 19);
+		textLastName.setColumns(10);
+		textLastName.setText(patient.getLName());
 		
 		JLabel lblFirstName = new JLabel("First Name:");
 		lblFirstName.setBounds(23, 72, 81, 15);
@@ -76,24 +112,30 @@ public class PatientEditorFrame extends JFrame {
 		JLabel lblDateOfBirth = new JLabel("Date of Birth:");
 		lblDateOfBirth.setBounds(23, 143, 95, 15);
 		
-		textField_2 = new JTextField();
-		textField_2.setBounds(23, 164, 168, 19);
-		textField_2.setColumns(10);
+		textDOB = new JTextField();
+		textDOB.setEditable(false);
+		textDOB.setBounds(23, 164, 168, 19);
+		textDOB.setColumns(10);
+		textDOB.setText(patient.getDOB());
 		
 		JLabel lblEmergencyPhoneNumber = new JLabel("Emergency Phone:");
 		lblEmergencyPhoneNumber.setBounds(251, 143, 131, 15);
 		
-		textField_3 = new JTextField();
-		textField_3.setBounds(251, 164, 202, 19);
-		textField_3.setColumns(10);
+		textPhone = new JTextField();
+		textPhone.setEditable(false);
+		textPhone.setBounds(251, 164, 202, 19);
+		textPhone.setColumns(10);
+		textPhone.setText(patient.getEmergencyPhone());
 		
 		JLabel lblPersonalDetails = new JLabel("Personal Details:");
 		lblPersonalDetails.setBounds(31, 18, 149, 19);
 		lblPersonalDetails.setFont(new Font("Dialog", Font.BOLD, 16));
 		
-		textField_4 = new JTextField();
-		textField_4.setBounds(23, 225, 434, 19);
-		textField_4.setColumns(10);
+		textAddress = new JTextField();
+		textAddress.setEditable(false);
+		textAddress.setBounds(23, 225, 434, 19);
+		textAddress.setColumns(10);
+		textAddress.setText(patient.getAddress());
 		
 		JLabel lblAddress = new JLabel("Address:");
 		lblAddress.setBounds(23, 204, 63, 15);
@@ -118,29 +160,52 @@ public class PatientEditorFrame extends JFrame {
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setBounds(517, 17, 296, 236);
 		
-		JToggleButton tglbtnToggleEditMode = new JToggleButton("Edit Mode Off");
+		tglbtnToggleEditMode = new JToggleButton("Edit Mode Off");
 		tglbtnToggleEditMode.setBounds(526, 572, 131, 25);
+		tglbtnToggleEditMode.addActionListener(this);
 		
 		JLabel label_1 = new JLabel("Comments:");
-		label_1.setBounds(526, 265, 79, 15);
+		label_1.setBounds(527, 284, 79, 15);
 		
 		JLabel label_2 = new JLabel("Billing:");
-		label_2.setBounds(23, 476, 48, 15);
+		label_2.setBounds(19, 476, 48, 15);
 		
-		JEditorPane editorPane_1 = new JEditorPane();
-		editorPane_1.setBounds(19, 345, 214, 111);
+		txtAreaCondition = new JTextArea();
+		txtAreaCondition.setEditable(false);
+		//txtAreaCondition.setBounds(19, 345, 214, 111);
+		txtAreaCondition.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		txtAreaCondition.setLineWrap(true);
+		scrollPaneCondition = new JScrollPane(txtAreaCondition);
+		scrollPaneCondition.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPaneCondition.setBounds(19, 345, 214, 111);
+		contentPane.add(scrollPaneCondition);
+		//contentPane.add(txtAreaCondition);
 		
-		JEditorPane editorPane_2 = new JEditorPane();
-		editorPane_2.setBounds(251, 345, 249, 111);
+		txtAreaAppointments = new JTextArea();
+		txtAreaAppointments.setEditable(false);
+		//txtAreaAppointments.setBounds(251, 345, 249, 111);
+		txtAreaAppointments.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		txtAreaAppointments.setLineWrap(true);
+		scrollPaneAppointments = new JScrollPane(txtAreaAppointments);
+		scrollPaneAppointments.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPaneAppointments.setBounds(251, 345, 249, 111);
+		contentPane.add(scrollPaneAppointments);
 		
-		JEditorPane editorPane = new JEditorPane();
-		editorPane.setBounds(526, 286, 287, 280);
+		txtAreaComments = new JTextArea();
+		txtAreaComments.setEditable(false);
+		//txtAreaComments.setBounds(526, 311, 287, 255);
+		txtAreaComments.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		txtAreaComments.setLineWrap(true);
+		scrollPaneComments= new JScrollPane(txtAreaComments);
+		scrollPaneComments.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPaneComments.setBounds(526, 311, 287, 255);
+		contentPane.add(scrollPaneComments);
 		
 		JPanel panel = new JPanel();
 		tabbedPane.addTab("Patient Pic", null, panel, null);
 		panel.setLayout(new BorderLayout(0, 0));
 		
-		JLabel lblNewLabel = new JLabel("Image Placeholder");
+		lblNewLabel = new JLabel("Image Placeholder");
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		lblNewLabel.setIcon(null);
 		panel.add(lblNewLabel);
@@ -149,41 +214,101 @@ public class PatientEditorFrame extends JFrame {
 		tabbedPane.addTab("Condition Pic", null, panel_1, null);
 		panel_1.setLayout(new BorderLayout(0, 0));
 		
-		JLabel label = new JLabel("Image Placeholder");
+		label = new JLabel("Image Placeholder");
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		panel_1.add(label);
 		contentPane.setLayout(null);
 		contentPane.add(lblPersonalDetails);
-		contentPane.add(textField);
+		contentPane.add(textFirstName);
 		contentPane.add(lblFirstName);
 		contentPane.add(lblAddress);
-		contentPane.add(textField_4);
+		contentPane.add(textAddress);
 		contentPane.add(lblDateOfBirth);
-		contentPane.add(textField_2);
+		contentPane.add(textDOB);
 		contentPane.add(lblEmergencyPhoneNumber);
-		contentPane.add(textField_3);
+		contentPane.add(textPhone);
 		contentPane.add(lblLastName);
-		contentPane.add(textField_1);
+		contentPane.add(textLastName);
 		contentPane.add(label_2);
 		contentPane.add(lblMedicalData);
 		contentPane.add(lblCondition);
-		contentPane.add(editorPane_1);
+		//contentPane.add(txtAreaCondition);
 		contentPane.add(lblAppointments);
-		contentPane.add(editorPane_2);
+		//contentPane.add(txtAreaAppointments);
 		contentPane.add(separator);
 		contentPane.add(separator_1);
 		contentPane.add(tabbedPane);
-		contentPane.add(editorPane);
+		//contentPane.add(txtAreaComments);
 		contentPane.add(label_1);
 		contentPane.add(tglbtnToggleEditMode);
 		
-		JButton btnNewButton = new JButton("Save Changes");
-		btnNewButton.setHorizontalAlignment(SwingConstants.LEADING);
-		btnNewButton.setBounds(669, 572, 144, 25);
-		contentPane.add(btnNewButton);
+		btnSaveButton = new JButton("Save Changes");
+		btnSaveButton.setHorizontalAlignment(SwingConstants.LEADING);
+		btnSaveButton.setBounds(669, 572, 144, 25);
+		btnSaveButton.addActionListener(this);
+		contentPane.add(btnSaveButton);
 		
-		JEditorPane editorPane_3 = new JEditorPane();
-		editorPane_3.setBounds(12, 490, 214, 88);
-		contentPane.add(editorPane_3);
+		txtAreaBilling = new JTextArea();
+		txtAreaBilling.setEditable(false);
+		//txtAreaBilling.setBounds(19, 490, 214, 88);
+		txtAreaBilling.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		txtAreaBilling.setLineWrap(true);
+		scrollPaneBilling= new JScrollPane(txtAreaBilling);
+		scrollPaneBilling.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPaneBilling.setBounds(19, 490, 214, 88);
+		contentPane.add(scrollPaneBilling);
+		//contentPane.add(scrollPaneComments);
+		
+		comboBox = new JComboBox();
+		comboBox.setModel(new DefaultComboBoxModel(new String[] {"Select Condition Pic"}));
+		comboBox.setEnabled(false);
+		comboBox.setBounds(517, 250, 214, 24);
+		contentPane.add(comboBox);
+		
+	
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == tglbtnToggleEditMode) {
+			if(tglbtnToggleEditMode.isSelected()) {
+				tglbtnToggleEditMode.setText("Edit Mode On");
+				textFirstName.setEditable(true);
+				textLastName.setEditable(true);
+				textDOB.setEditable(true);
+				textPhone.setEditable(true);
+				textAddress.setEditable(true);
+				txtAreaCondition.setEditable(true);
+				txtAreaAppointments.setEditable(true);
+				txtAreaComments.setEditable(true);
+				txtAreaBilling.setEditable(true);
+
+				//txtAreaBilling.setBackground(UIManager.getColor("TextField.background"));//did not work to set background color to the same as a disabled jtextfield
+				
+			} else {
+				tglbtnToggleEditMode.setText("Edit Mode Off");
+				textFirstName.setEditable(false);
+				textLastName.setEditable(false);
+				textDOB.setEditable(false);
+				textPhone.setEditable(false);
+				textAddress.setEditable(false);
+				txtAreaCondition.setEditable(false);
+				txtAreaAppointments.setEditable(false);
+				txtAreaComments.setEditable(false);
+				txtAreaBilling.setEditable(false);
+
+			}
+		} else if(e.getSource() == btnSaveButton) {
+			Patient.deleteEntry(indexInArrayList);
+			Patient.editRecord(patient, indexInArrayList);
+			try {
+				Patient.updateRecordsFile();
+			} catch (IOException excp) {
+				JOptionPane.showMessageDialog(this, "Error", "Patient edit unsuccessful:\n" +
+															"unable to write to file.", JOptionPane.ERROR_MESSAGE);
+			}
+			JOptionPane.showMessageDialog(this, "Patient edit successful");
+		}
+		//TODO add listeners to every text field that call setters for fields in the patient class
 	}
 }

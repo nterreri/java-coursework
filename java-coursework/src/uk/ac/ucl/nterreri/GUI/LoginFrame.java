@@ -65,6 +65,10 @@ public class LoginFrame extends JFrame implements ActionListener {
 		try{
 
 			loginData = (ArrayList<String[]>) fetchLoginData();
+			for(int i = 0; i < loginData.size(); i++) {
+				for(int j = 0; j<2; j++)
+					loginData.get(i)[j].trim();
+			}
 
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
@@ -78,6 +82,11 @@ public class LoginFrame extends JFrame implements ActionListener {
 					"Terminating program.");
 			System.exit(1);
 		}
+		
+		for(int i = 0; i < loginData.size(); i++) {
+			for(int j = 0; j<2; j++)
+				System.out.println(loginData.get(i)[j]);
+		}
 
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 280, 252);
@@ -85,9 +94,9 @@ public class LoginFrame extends JFrame implements ActionListener {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-
+		
 		JLabel lblPatientManagementSystem = new JLabel("Patient Management System");
-		lblPatientManagementSystem.setBounds(5, 5, 263, 19);
+		lblPatientManagementSystem.setBounds(270/2 - 260/2, 5, 260, 19);
 		lblPatientManagementSystem.setFont(new Font("Dialog", Font.BOLD, 16));
 		contentPane.add(lblPatientManagementSystem);
 
@@ -96,36 +105,40 @@ public class LoginFrame extends JFrame implements ActionListener {
 		contentPane.add(panel);
 
 		JLabel label = new JLabel("Username");
-		label.setBounds(96, 19, 74, 15);
+		label.setBounds(270/2 - 72/2, 19, 72, 15);
 
 		usernameField = new JTextField();
-		usernameField.setBounds(69, 47, 134, 19);
+		usernameField.setBounds(270/2 - 134/2, 47, 134, 19);
 		usernameField.setColumns(10);
 
 		JLabel lblPassword = new JLabel("Password");
-		lblPassword.setBounds(96, 77, 74, 15);
+		lblPassword.setBounds(270/2 - 74/2, 77, 74, 15);
 
 		passwordField = new JPasswordField();
-		passwordField.setBounds(69, 104, 134, 19);
-		panel.setLayout(null);
-		panel.add(lblPassword);
-		panel.add(usernameField);
-		panel.add(label);
-		panel.add(passwordField);
+		passwordField.addActionListener(this);
+		
+		passwordField.setBounds(270/2 - 134/2, 104, 134, 19);
 
 		JSeparator separator = new JSeparator();
 		separator.setBounds(12, 12, 256, 2);
-		panel.add(separator);
 		
 		JButton btnLogIn = new JButton("Log in");
-		btnLogIn.setBounds(79, 135, 117, 25);
+		btnLogIn.setBounds(270/2 - 117/2, 135, 117, 25);
+		btnLogIn.addActionListener(this);
+		panel.setLayout(null);
+		panel.add(label);
+		panel.add(usernameField);
+		panel.add(lblPassword);
+		panel.add(separator);
 		panel.add(btnLogIn);
+		panel.add(passwordField);
 
 		JLabel label_1 = new JLabel("Login");
 		label_1.setHorizontalAlignment(SwingConstants.CENTER);
 		label_1.setFont(new Font("Dialog", Font.BOLD, 16));
-		label_1.setBounds(5, 22, 263, 19);
+		label_1.setBounds(270/2 - 263/2, 22, 263, 19);
 		contentPane.add(label_1);
+	
 	}
 
 	private static List<String[]> fetchLoginData() throws FileNotFoundException, IOException{
@@ -142,7 +155,7 @@ public class LoginFrame extends JFrame implements ActionListener {
 			if(usernameIn.equalsIgnoreCase(loginData.get(i)[0]))
 			{
 				//, proceed to compare password[],
-				if(passwordIn.equals(loginData.get(i)[1]))
+				if(passwordIn.equalsIgnoreCase(loginData.get(i)[1]))
 					return true;
 				
 				//, if password does not match, login failed
@@ -161,10 +174,13 @@ public class LoginFrame extends JFrame implements ActionListener {
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
+
 		usernameIn = this.usernameField.getText();
-		passwordIn = this.passwordField.getPassword().toString();
-		validateLogin();
+		passwordIn = new String(this.passwordField.getPassword());
+		if(validateLogin()) {
+			this.dispose(); //destroy this window, the main window should listen for this event
+			//from this frame
+		}
 	}
 	
 }

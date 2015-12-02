@@ -50,9 +50,9 @@ public class Patient {
 
 
 	//fields:
-	private String patient_id = "1000";				//0 in patientRecords String array element
-	private String l_name = "LASTNAME";				//1 in patientRecords String array element
-	private String f_name = "FIRSTNAME";			//2 in patientRecords String array element
+	private String patientId = "1000";				//0 in patientRecords String array element
+	private String lName = "LASTNAME";				//1 in patientRecords String array element
+	private String fName = "FIRSTNAME";			//2 in patientRecords String array element
 	private String DOB = "00/00/0000";				//3 in patientRecords String array element
 	private String address = "ADDRESS";				//4 in patientRecords String array element
 	private String emergencyPhone = "0000000000";	//5 in patientRecords String array element, 10 digits number
@@ -61,9 +61,9 @@ public class Patient {
 	private String billing = null;					//8 in patientRecords String array element
 	private String comments = null;					//9 in patientRecords String array element
 	private String patientPictureURL = null;		//10 in patientRecords String array element
-	private String conditionPictureURL = null;		//11 in patientRecords String array element
+	private String conditionPictures = null;		//11 in patientRecords String array element
 	private String conditionURL = null;				//12 in patientRecords String array element
-	private static ArrayList<String[]> patientRecords; // = new List<String[]>(12);
+	private static ArrayList<String[]> patientRecords; // = new List<String[]>(13);
 	private static File recordsFile;// = new File();
 	public static final int ELEMENTS = 13;			//number of elements in the arraylist
 
@@ -76,9 +76,31 @@ public class Patient {
 	 * @throws Exception
 	 * @see getNextId()
 	 */
-	Patient() throws NumberFormatException, Exception {
-
-		this.patient_id = Integer.toString(getNextId());
+	public Patient() throws NumberFormatException {
+		conditionPictures = new String();	//this must be reinitialized at instance creation because its default value should be
+		//null, but the modifier methods of this private field append content to the string, and a null value will remain at the start
+		//of the string if this is not reinitialized.
+		
+		this.patientId = Integer.toString(getNextId());	
+		
+	}
+	
+	//should return selected patient
+	public Patient(int indexInArrayList) {
+		//"manually" set every field:
+		this.patientId = patientRecords.get(indexInArrayList)[0];				
+		this.lName = patientRecords.get(indexInArrayList)[1];
+		this.fName = patientRecords.get(indexInArrayList)[2];
+		this.DOB = patientRecords.get(indexInArrayList)[3];
+		this.address = patientRecords.get(indexInArrayList)[4];
+		this.emergencyPhone = patientRecords.get(indexInArrayList)[5];
+		this.condition = patientRecords.get(indexInArrayList)[6];
+		this.appointments = patientRecords.get(indexInArrayList)[7];
+		this.billing = patientRecords.get(indexInArrayList)[8];
+		this.comments = patientRecords.get(indexInArrayList)[9];
+		this.patientPictureURL = patientRecords.get(indexInArrayList)[10];
+		this.conditionPictures = patientRecords.get(indexInArrayList)[11];
+		this.conditionURL = patientRecords.get(indexInArrayList)[12];
 	}
 
 	//public methods:
@@ -120,83 +142,136 @@ public class Patient {
 		return patientRecords;
 	}
 	
+	public String getPatientId() {
+		return patientId;
+	}
+
+	public String getLName() {
+		return lName;
+	}
+
+	public String getFName() {
+		return fName;
+	}
+
+	public String getConditionPictures() {
+		return conditionPictures;
+	}
+
+	public String getDOB() {
+		return DOB;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public String getEmergencyPhone() {
+		return emergencyPhone;
+	}
+
+	public String getCondition() {
+		return condition;
+	}
+
+	public String getAppointments() {
+		return appointments;
+	}
+
+	public String getBilling() {
+		return billing;
+	}
+
+	public String getComments() {
+		return comments;
+	}
+
+	public String getPatientPictureURL() {
+		return patientPictureURL;
+	}
+
+	public String getConditionURL() {
+		return conditionURL;
+	}
+
+	
 	//setters:
 	/**
 	 * Sets first and last name of patient, throws an exception if the initial character
 	 * of each name is not capitalized.
 	 * 
-	 * @param l_name
-	 * @param f_name
+	 * @param lName
+	 * @param fName
 	 * @throws NameFormattingException
 	 * @see setNameNoCheck()
 	 */
-	void setName(String l_name, String f_name) throws NameFormattingException {
-		if(!Character.isUpperCase(l_name.charAt(0)) || 
-				!Character.isUpperCase(f_name.charAt(0)))
+	void setName(String lName, String fName) throws NameFormattingException {
+		if(!Character.isUpperCase(lName.charAt(0)) || 
+				!Character.isUpperCase(fName.charAt(0)))
 			//First letter is lowercase. Confirm? JDIALOG
 			//textbox in dialog to edit, ok cancel buttons
 			throw (new NameFormattingException());
 
-		this.f_name = f_name;
-		this.l_name = l_name;
+		this.fName = fName;
+		this.lName = lName;
 	}
 
 	/**
 	 * Sets first and last name of patient, does not throw an exception if the initial
 	 * character of each name is not capitalized.
 	 * 
-	 * @param l_name
-	 * @param f_name
+	 * @param lName
+	 * @param fName
 	 * @see setName()
 	 */
-	void setNameNoCheck(String l_name, String f_name) {
+	void setNameNoCheck(String lName, String fName) {
 
-		this.f_name = f_name;
-		this.l_name = l_name;
+		this.fName = fName;
+		this.lName = lName;
 	}
 
 	/**
 	 * Sets the last name of the patient, throws NameFormattingException where this does
 	 * not start with a capital letter.
 	 * 
-	 * @param l_name
+	 * @param lName
 	 * @throws NameFormattingException
 	 * @see setLastNameNoCheck()
 	 */
-	void setLastName(String l_name) throws NameFormattingException {
-		if(!Character.isUpperCase(l_name.charAt(0)))
+	void setLastName(String lName) throws NameFormattingException {
+		if(!Character.isUpperCase(lName.charAt(0)))
 			//First letter is lowercase. Confirm? JDIALOG
 			//textbox in dialog to edit, ok cancel buttons
 			throw (new NameFormattingException());
-		this.l_name = l_name;
+		this.lName = lName;
 	}
 
 	/**
 	 * Sets the last name of the patient, does not throw NameFormattingException if this 
 	 * does not start with a capital letter.
 	 * 
-	 * @param l_name
+	 * @param lName
 	 * @throws NameFormattingException
 	 * @see setLastName()
 	 */
-	void setLastNameNoCheck(String l_name) {
-		this.l_name = l_name;
+	void setLastNameNoCheck(String lName) {
+		this.lName = lName;
 	}
 
 	/**
 	 * Sets the first name of the patient, throws NameFormattingException where this does
 	 * not start with a capital letter.
 	 * 
-	 * @param f_name
+	 * @param fName
 	 * @throws NameFormattingException
 	 * @see setFirstNameNoCheck()
 	 */
-	void setFirstName(String f_name) throws NameFormattingException {
-		if(!Character.isUpperCase(f_name.charAt(0)))
+	void setFirstName(String fName) throws NameFormattingException {
+		if(!Character.isUpperCase(fName.charAt(0)))
 			//First letter is lowercase. Confirm? JDIALOG
 			//textbox in dialog to edit, ok cancel buttons
 			throw (new NameFormattingException());
-		this.f_name = f_name;
+		this.fName = fName;
 	}
 
 
@@ -204,13 +279,13 @@ public class Patient {
 	 * Sets the first name of the patient, does not throw NameFormattingException if 
 	 * this does not start with a capital letter.
 	 * 
-	 * @param f_name
+	 * @param fName
 	 * @throws NameFormattingException
 	 * @see setFirstName()
 	 */
-	void setFirstNameNoCheck(String f_name) {
+	void setFirstNameNoCheck(String fName) {
 
-		this.f_name = f_name;
+		this.fName = fName;
 	}
 
 	/**
@@ -309,10 +384,22 @@ public class Patient {
 	 * @param conditionPictureURL
 	 * @throws MalformedURLException
 	 */
-	void setConditionPictureURL(String conditionPictureURL) throws MalformedURLException{
+	/*void setConditionPictureURL(String conditionPictureURL) throws MalformedURLException{
 
-		URL constructionAttempt = new URL(conditionPictureURL);
+		new URL(conditionPictureURL);
 		this.conditionPictureURL = conditionPictureURL;
+	}*/
+	
+	void addConditionPicture(String conditionPictureURL) throws MalformedURLException {
+		new URL(conditionPictureURL);
+		this.conditionPictures += conditionPictureURL + " ";
+	}
+	
+	void addConditionPicture(File conditionPictureFile) throws FileNotFoundException {
+		if(conditionPictureFile.exists())
+			this.conditionPictures += conditionPictureFile.getAbsolutePath() + " ";
+		else
+			throw new FileNotFoundException();
 	}
 
 	/**
@@ -362,6 +449,31 @@ public class Patient {
 		//the last int is obtained by parsing the first element of the last String 
 		//array in the static field "patientRecords":
 		int next_id = Integer.parseInt(patientRecords.get(patientRecords.size() - 1)[0]) + 1;
+		
+		/*int next_id = 1001;
+		try {
+			next_id = Integer.parseInt(patientRecords.get(patientRecords.size() - 1)[0]) + 1;
+		} catch (NumberFormatException e) {
+			if(patientRecords.size() == 0) {
+				//default to 1001
+				System.err.println("Warning: records empty, defaulting to patient ID 1001");
+				return 1001;
+			} else {
+				//attempt to default to 1001, but check that no record has this id, if a record has this id
+				//increase to + 1, repeat until successful
+				System.err.println("Error: unable to read last patient ID value, please check file manually for problems.\n"
+						+ "Looking for first available ID.");
+				int candidateID = 1001;
+				while(candidateID <= 9999) {
+					if(search(0, Integer.toString(candidateID)) != null) 
+						candidateID++;
+					else
+						return candidateID;
+				}
+				System.err.println("Unable to determine available ID");
+				//if(result != null) a match was found and the number must be increased
+			}
+		}*/
 
 		if(next_id > 9999 || next_id < 1000) {
 			throw (new NumberFormatException("Unexpected patient id number as last patient" +
@@ -376,7 +488,7 @@ public class Patient {
 	 * used after these have been loaded into memory through initialize() or 
 	 * reloadRecordsFromFile().
 	 * 
-	 * Where a conflict between the patient_id field of the patient instance and the 
+	 * Where a conflict between the patientId field of the patient instance and the 
 	 * mathematical successor to the last patient id number at the bottom of the 
 	 * patientRecords stack is detected, then the value of the latter wins.
 	 * 
@@ -385,17 +497,49 @@ public class Patient {
 	 * @see checkIDConsistency()
 	 */
 	private void addRecord() throws NumberFormatException {
-		String [] thisRecord = { patient_id, l_name, f_name, DOB, address, emergencyPhone, condition, 
-				appointments, billing, comments ,patientPictureURL,	conditionPictureURL,
+		String [] thisRecord = { patientId, lName, fName, DOB, address, emergencyPhone, condition, 
+				appointments, billing, comments ,patientPictureURL,	conditionPictures,
 				conditionURL, };
 		if(!checkIDConsistency())
 			{
-				this.patient_id = Integer.toString(getNextId());
-				thisRecord[0] = this.patient_id;
+				this.patientId = Integer.toString(getNextId());
+				thisRecord[0] = this.patientId;
 			}
 		patientRecords.add(thisRecord);
 	}
+	
+	public static void editRecord(Patient editedPatient, int indexInArrayList) {
+		/*//insert element at position of element to be edited
+		patientRecords.add(indexInArrayList, editedPatient.toStringArr());
+		//patientRecords.remove(indexInArrayList + 1);*/
+		System.out.println("Before:\n"
+				+ patientRecords.get(indexInArrayList)[1]);
+		patientRecords.set(indexInArrayList, editedPatient.toStringArr());
+		System.out.println("After:\n"
+				+ patientRecords.get(indexInArrayList)[1]);
+	}
 
+	@Override
+	public String toString() {
+		return this.patientId + ", " + 
+				this.lName + ", " + 
+				this.fName + ", " + 
+				this.DOB + ", " + 
+				this.address + ", " + 
+				this.emergencyPhone + ", " + 
+				this.condition + ", " + 
+				this.appointments + ", " + 
+				this.billing + ", " + 
+				this.comments + ", " + 
+				this.patientPictureURL + ", " + 
+				this.conditionPictures + ", " + 
+				this.conditionURL;
+	}
+	
+	public String[] toStringArr() {
+		return this.toString().split(", ");
+	}
+	
 	/**
 	 * Called by addRecord() to check for patient id consistency.
 	 * 
@@ -403,12 +547,11 @@ public class Patient {
 	 * patient id, true otherwise.
 	 */
 	private boolean checkIDConsistency() {
-		if(!(this.patient_id.equals(Integer.toString(getNextId()))))
+		if(!(this.patientId.equals(Integer.toString(getNextId()))))
 			return false;
 		else
 			return true;
 	}
-	
 	
 	/**
 	 * Reads patient data from default file into the patientRecords field.
@@ -431,7 +574,7 @@ public class Patient {
 	 * 
 	 * @throws IOException
 	 */
-	private static void updateRecordsFile() throws IOException {
+	public static void updateRecordsFile() throws IOException {
 		backup(recordsFile);
 
 		FileWriter fw = new FileWriter(recordsFile);
@@ -504,7 +647,7 @@ public class Patient {
 	 * @throws IndexOutOfBoundsException
 	 * @see updateRecordsFile()
 	 */
-	private static void deleteEntry(int indexInArrayList) throws IndexOutOfBoundsException {
+	public static void deleteEntry(int indexInArrayList) throws IndexOutOfBoundsException {
 		patientRecords.remove(indexInArrayList);
 	}
 
@@ -603,7 +746,7 @@ public class Patient {
 		}
 
 		System.out.println("Successfully instantiated Patient object with patient id:");
-		System.out.println(p.patient_id);
+		System.out.println(p.patientId);
 
 		try {
 			p.setName("Pinco", "palla");
@@ -621,7 +764,7 @@ public class Patient {
 		p.setCondition("Hypochondriac");
 
 		try {
-			p.setConditionPictureURL("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
+			//p.setconditionPictures("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
 			p.setConditionURL("http://www.nhs.uk/conditions/hypochondria/Pages/Introduction.aspx");
 			p.setPatientPictureURL("http://media.makeadare.com/img/6160cf6aa/image_bceabb1299.jpg");
 		} catch (MalformedURLException e) {
@@ -653,7 +796,127 @@ public class Patient {
 			System.out.print(Patient.patientRecords.get(2)[i] + ", ");
 		}
 		System.out.println();
+		
+		
+		
+		//Separate test for conditionPictures adders:
+		System.out.println("First adders test:");
+		try {
+			p.addConditionPicture("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
+		} catch (MalformedURLException e) {
+			
+			System.err.println("Failed to add URL");
+		}
+		
+		try {
+			p.addConditionPicture(new File("download.jpg"));
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to found sample file");
+		}
+		
+		System.out.println("Result:");
+		String[] split = p.conditionPictures.split(" ");
+		
+		for(int i = 0; i<split.length; i++) {
+			System.out.println("pos " + i + ": " + split[i]);
+		}
+		//This test shows that the methods can successfully recognize valid URLs and valid files.
+		
+		//Test with invalid url and invalid file path:
+
+		System.out.println("Second adders test:");
+		try {
+			p.addConditionPicture("mages.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
+		} catch (MalformedURLException e) {
+			
+			System.err.println("Failed to add URL");
+		}
+		
+		try {
+			p.addConditionPicture(new File("download.BROKEN"));
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to found sample file");
+		}
+		
+
+		System.out.println("Result:");
+		
+		split = p.conditionPictures.split(" ");
+		
+		for(int i = 0; i<split.length; i++) {
+			System.out.println("pos " + i + ": " + split[i]);
+		}
+		//this test showed that bad URLs, files will not modify the field
+		
+		//test for well formed URL/file not pointing at a picture
+		System.out.println("Third adders test:");
+		try {
+			p.addConditionPicture("http://pastebin.com/download.php?i=A90wUvxi");
+		} catch (MalformedURLException e) {
+			
+			System.err.println("Failed to add URL");
+		}
+		
+		try {
+			p.addConditionPicture(new File("opencsv-3.6.jar"));
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to found sample file");
+		}
+		
+
+		System.out.println("Result:");
+		
+		split = p.conditionPictures.split(" ");
+		
+		for(int i = 0; i<split.length; i++) {
+			System.out.println("pos " + i + ": " + split[i]);
+		}
+		
+		//toString and toStringArr seem to be working:
+		System.out.println(p.toString());
+		
+		for(int i = 0; i < p.toStringArr().length; i++) {
+			System.out.println(p.toStringArr()[i]);
+		}
+		
+		/*Patient pat = new Patient();
+		pat.setComments("PAT");
+		Patient.editRecord(pat, 2);*/
+		//this test showed that these adder methods do not check if the provided resource is a picture
+		//so this is either something that should be fixed, or it should be delegated to the GUI
+		//Since the GUI will use a jfilechooser, this component will simply limit the acceptable file formats
+		//URLs are trickier. May just display an error icon instead of a picture where the user typed in 
+		//a valid URL that is not a picture.
+		
+		//try out String.split() to allow for multiple URLs to be stored inside a single String instance:
+		//this works, but only checks the protocol of the first string, meaning:
+		//if we split the string by " ", then only whether the first of the strings so obtained specifies a protocol matters,
+		//this is inadequate where any successive string (obtained from the split) is not a well formed URL
+		
+		//Another issue: this does not allow for filepaths, but the end user would be uploading pictures stored locally, not on 
+		//the internet.
+		/*try{
+			p.setconditionPictures("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg http://media.makeadare.com/img/6160cf6aa/image_bceabb1299.jpg");
+			
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}*/
+		
+		
+		/*for(int i = 0; i<p.conditionPictureURL.split(" ").length; i++)
+			System.out.println(
+					p.conditionPictureURL.split(" ")[i]);*/
+		
+		
+		/*String[] split = p.conditionPictures.split(" ");
+		
+		for(int i = 0; i < split.length; i++) {
+			//checkURIWellformedness(split[i]); //instance method? static method? external method?
+		}*/
+		
 	}
+
 
 
 }

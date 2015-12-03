@@ -6,6 +6,7 @@ import uk.ac.ucl.nterreri.task3.Patient;
 
 public class PatientTableModel extends DefaultTableModel {
 
+	
 	@Override
 	public int getRowCount() {
 		return Patient.getPatientRecords().size();

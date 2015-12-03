@@ -52,7 +52,7 @@ public class Patient {
 	//fields:
 	private String patientId = "1000";				//0 in patientRecords String array element
 	private String lName = "LASTNAME";				//1 in patientRecords String array element
-	private String fName = "FIRSTNAME";			//2 in patientRecords String array element
+	private String fName = "FIRSTNAME";				//2 in patientRecords String array element
 	private String DOB = "00/00/0000";				//3 in patientRecords String array element
 	private String address = "ADDRESS";				//4 in patientRecords String array element
 	private String emergencyPhone = "0000000000";	//5 in patientRecords String array element, 10 digits number
@@ -60,7 +60,7 @@ public class Patient {
 	private String appointments = null;				//7 in patientRecords String array element
 	private String billing = null;					//8 in patientRecords String array element
 	private String comments = null;					//9 in patientRecords String array element
-	private String patientPictureURL = null;		//10 in patientRecords String array element
+	private String patientPicture = null;			//10 in patientRecords String array element
 	private String conditionPictures = null;		//11 in patientRecords String array element
 	private String conditionURL = null;				//12 in patientRecords String array element
 	private static ArrayList<String[]> patientRecords; // = new List<String[]>(13);
@@ -98,7 +98,7 @@ public class Patient {
 		this.appointments = patientRecords.get(indexInArrayList)[7];
 		this.billing = patientRecords.get(indexInArrayList)[8];
 		this.comments = patientRecords.get(indexInArrayList)[9];
-		this.patientPictureURL = patientRecords.get(indexInArrayList)[10];
+		this.patientPicture = patientRecords.get(indexInArrayList)[10];
 		this.conditionPictures = patientRecords.get(indexInArrayList)[11];
 		this.conditionURL = patientRecords.get(indexInArrayList)[12];
 	}
@@ -186,8 +186,8 @@ public class Patient {
 		return comments;
 	}
 
-	public String getPatientPictureURL() {
-		return patientPictureURL;
+	public String getPatientPicture() {
+		return patientPicture;
 	}
 
 	public String getConditionURL() {
@@ -205,7 +205,7 @@ public class Patient {
 	 * @throws NameFormattingException
 	 * @see setNameNoCheck()
 	 */
-	void setName(String lName, String fName) throws NameFormattingException {
+	public void setName(String lName, String fName) throws NameFormattingException {
 		if(!Character.isUpperCase(lName.charAt(0)) || 
 				!Character.isUpperCase(fName.charAt(0)))
 			//First letter is lowercase. Confirm? JDIALOG
@@ -224,7 +224,7 @@ public class Patient {
 	 * @param fName
 	 * @see setName()
 	 */
-	void setNameNoCheck(String lName, String fName) {
+	public void setNameNoCheck(String lName, String fName) {
 
 		this.fName = fName;
 		this.lName = lName;
@@ -238,7 +238,7 @@ public class Patient {
 	 * @throws NameFormattingException
 	 * @see setLastNameNoCheck()
 	 */
-	void setLastName(String lName) throws NameFormattingException {
+	public void setLastName(String lName) throws NameFormattingException {
 		if(!Character.isUpperCase(lName.charAt(0)))
 			//First letter is lowercase. Confirm? JDIALOG
 			//textbox in dialog to edit, ok cancel buttons
@@ -254,7 +254,7 @@ public class Patient {
 	 * @throws NameFormattingException
 	 * @see setLastName()
 	 */
-	void setLastNameNoCheck(String lName) {
+	public void setLastNameNoCheck(String lName) {
 		this.lName = lName;
 	}
 
@@ -266,7 +266,7 @@ public class Patient {
 	 * @throws NameFormattingException
 	 * @see setFirstNameNoCheck()
 	 */
-	void setFirstName(String fName) throws NameFormattingException {
+	public void setFirstName(String fName) throws NameFormattingException {
 		if(!Character.isUpperCase(fName.charAt(0)))
 			//First letter is lowercase. Confirm? JDIALOG
 			//textbox in dialog to edit, ok cancel buttons
@@ -283,7 +283,7 @@ public class Patient {
 	 * @throws NameFormattingException
 	 * @see setFirstName()
 	 */
-	void setFirstNameNoCheck(String fName) {
+	public void setFirstNameNoCheck(String fName) {
 
 		this.fName = fName;
 	}
@@ -296,7 +296,7 @@ public class Patient {
 	 * @param DOB
 	 * @throws ParseException
 	 */
-	void setDOB(String DOB) throws ParseException {
+	public void setDOB(String DOB) throws ParseException {
 		SimpleDateFormat localDF = new SimpleDateFormat("dd/MM/yyyy");
 		//localDF = (SimpleDateFormat) DateFormat.getDateInstance();
 
@@ -312,7 +312,7 @@ public class Patient {
 	 * 
 	 * @param address
 	 */
-	void setAddress(String address) {
+	public void setAddress(String address) {
 
 		//address can be garbage
 		this.address = address;
@@ -323,7 +323,7 @@ public class Patient {
 	 * 
 	 * @param condition
 	 */
-	void setCondition(String condition) {
+	public void setCondition(String condition) {
 
 		//condition can be garbage:
 		this.condition = condition;
@@ -334,7 +334,7 @@ public class Patient {
 	 * 
 	 * @param appointments
 	 */
-	void setAppointments(String appointments) {
+	public void setAppointments(String appointments) {
 
 		//appointments can be garbage
 		this.appointments = appointments;
@@ -345,7 +345,7 @@ public class Patient {
 	 * 
 	 * @param billing
 	 */
-	void setBilling(String billing) {
+	public void setBilling(String billing) {
 
 		//billing address/info can be garbage:
 		this.billing = billing;
@@ -356,7 +356,7 @@ public class Patient {
 	 * 
 	 * @param comments
 	 */
-	void setComments(String comments) {
+	public void setComments(String comments) {
 
 		//comments can be garbage:
 		this.comments = comments;
@@ -368,13 +368,19 @@ public class Patient {
 	 * Sets patient picture URL unless URL is malformed. In which case, an
 	 * exception is thrown.
 	 * 
-	 * @param patientPictureURL
+	 * @param patientPicture
 	 * @throws MalformedURLException
 	 */
-	void setPatientPictureURL(String patientPictureURL) throws MalformedURLException{
+	public void setPatientPicture(String patientPictureURL) throws MalformedURLException{
 
 		URL constructionAttempt = new URL(patientPictureURL);
-		this.patientPictureURL = patientPictureURL;
+		this.patientPicture = patientPictureURL;
+	}
+
+	public void setPatientPicture(File patientPicture) throws IOException, FileNotFoundException{
+
+		patientPicture.isFile();
+		this.patientPicture = patientPicture.getAbsolutePath();
 	}
 
 	/**
@@ -390,12 +396,12 @@ public class Patient {
 		this.conditionPictureURL = conditionPictureURL;
 	}*/
 	
-	void addConditionPicture(String conditionPictureURL) throws MalformedURLException {
+	public void addConditionPicture(String conditionPictureURL) throws MalformedURLException {
 		new URL(conditionPictureURL);
 		this.conditionPictures += conditionPictureURL + " ";
 	}
 	
-	void addConditionPicture(File conditionPictureFile) throws FileNotFoundException {
+	public void addConditionPicture(File conditionPictureFile) throws FileNotFoundException {
 		if(conditionPictureFile.exists())
 			this.conditionPictures += conditionPictureFile.getAbsolutePath() + " ";
 		else
@@ -409,7 +415,7 @@ public class Patient {
 	 * @param conditionURL
 	 * @throws MalformedURLException
 	 */
-	void setConditionURL(String conditionURL) throws MalformedURLException{
+	public void setConditionURL(String conditionURL) throws MalformedURLException{
 
 		URL constructionAttempt = new URL(conditionURL);
 		this.conditionURL = conditionURL;
@@ -422,7 +428,7 @@ public class Patient {
 	 * @param emergencyPhone
 	 * @throws NumberFormatException
 	 */
-	void setEmergencyPhone(String emergencyPhone) throws NumberFormatException {
+	public void setEmergencyPhone(String emergencyPhone) throws NumberFormatException {
 		if(emergencyPhone.length() != 10)
 		{
 			NumberFormatException e = new NumberFormatException("Phone number length "
@@ -445,7 +451,7 @@ public class Patient {
 	 * @throws NumberFormatException
 	 * @see Patient()
 	 */
-	private int getNextId() throws NumberFormatException {
+	public int getNextId() throws NumberFormatException {
 		//the last int is obtained by parsing the first element of the last String 
 		//array in the static field "patientRecords":
 		int next_id = Integer.parseInt(patientRecords.get(patientRecords.size() - 1)[0]) + 1;
@@ -496,9 +502,9 @@ public class Patient {
 	 * @see reloadRecordsFromfile()
 	 * @see checkIDConsistency()
 	 */
-	private void addRecord() throws NumberFormatException {
+	public void addRecord() throws NumberFormatException {
 		String [] thisRecord = { patientId, lName, fName, DOB, address, emergencyPhone, condition, 
-				appointments, billing, comments ,patientPictureURL,	conditionPictures,
+				appointments, billing, comments ,patientPicture,	conditionPictures,
 				conditionURL, };
 		if(!checkIDConsistency())
 			{
@@ -509,14 +515,7 @@ public class Patient {
 	}
 	
 	public static void editRecord(Patient editedPatient, int indexInArrayList) {
-		/*//insert element at position of element to be edited
-		patientRecords.add(indexInArrayList, editedPatient.toStringArr());
-		//patientRecords.remove(indexInArrayList + 1);*/
-		System.out.println("Before:\n"
-				+ patientRecords.get(indexInArrayList)[1]);
 		patientRecords.set(indexInArrayList, editedPatient.toStringArr());
-		System.out.println("After:\n"
-				+ patientRecords.get(indexInArrayList)[1]);
 	}
 
 	@Override
@@ -531,7 +530,7 @@ public class Patient {
 				this.appointments + ", " + 
 				this.billing + ", " + 
 				this.comments + ", " + 
-				this.patientPictureURL + ", " + 
+				this.patientPicture + ", " + 
 				this.conditionPictures + ", " + 
 				this.conditionURL;
 	}
@@ -766,7 +765,7 @@ public class Patient {
 		try {
 			//p.setconditionPictures("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
 			p.setConditionURL("http://www.nhs.uk/conditions/hypochondria/Pages/Introduction.aspx");
-			p.setPatientPictureURL("http://media.makeadare.com/img/6160cf6aa/image_bceabb1299.jpg");
+			p.setPatientPicture("http://media.makeadare.com/img/6160cf6aa/image_bceabb1299.jpg");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			System.exit(1);

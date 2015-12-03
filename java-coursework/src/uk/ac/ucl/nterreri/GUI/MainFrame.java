@@ -22,6 +22,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.swing.SwingConstants;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -219,10 +221,6 @@ public class MainFrame extends JFrame implements ActionListener {
 				scrollPaneList = new JScrollPane(list);
 				tabbedPane.addTab("List", null, scrollPaneList, null);
 
-
-
-
-			
 	}
 
 	@Override
@@ -230,6 +228,34 @@ public class MainFrame extends JFrame implements ActionListener {
 		if(e.getSource() == btnAdd) {
 			try {
 				Patient newPatient = new Patient();
+				PatientEditorFrame editorFrame = new PatientEditorFrame(this, newPatient);
+				editorFrame.setVisible(true);
+				editorFrame.addWindowListener(new WindowAdapter() {
+					
+					/*@Override
+					public void windowLostFocus(WindowEvent e) {
+						//model = new PatientTableModel(); // refresh table data by rebuilding the model from 
+						//Patient class static data
+						//table.setModel(model);
+						model.fireTableChanged(new TableModelEvent());
+					}
+					
+					@Override
+					public void windowDeactivated(WindowEvent e) {
+						//model = new PatientTableModel(); // refresh table data by rebuilding the model from 
+						//Patient class static data
+						//table.setModel(model);
+						model.fireTableChanged(new TableModelEvent());
+					}*/
+					
+					@Override
+					public void windowClosed(WindowEvent e){
+						//model = new PatientTableModel(); // refresh table data by rebuilding the model from 
+						//Patient class static data
+						//table.setModel(model);
+						model.fireTableChanged(new TableModelEvent(model));
+					}
+				});
 			} catch(NumberFormatException excp) {
 				JOptionPane.showMessageDialog(this, (Object)("Error: unable to determine next available patient ID:\n"
 						+ "Either the patient records file is empty, or full, or the last recorded patient ID has been corrupted."),
@@ -241,13 +267,12 @@ public class MainFrame extends JFrame implements ActionListener {
 			Patient.deleteEntry(table.getSelectedRow());
 			model.removeRow(table.getSelectedRow());
 			JOptionPane.showMessageDialog(this, "Patient successfully deleted");
+			
 		} else if(e.getSource() == btnEdit) {
 			//create new patient instance with int parameter (selected row)
 			Patient existingPatient = new Patient(table.getSelectedRow());
-			PatientEditorFrame editorFrame = new PatientEditorFrame(existingPatient, table.getSelectedRow());
+			PatientEditorFrame editorFrame = new PatientEditorFrame(this, existingPatient, table.getSelectedRow());
 			editorFrame.setVisible(true);
-		}
-		
+		} 
 	}
-
 }

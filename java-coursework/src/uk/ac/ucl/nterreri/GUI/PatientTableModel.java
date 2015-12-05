@@ -6,6 +6,11 @@ import uk.ac.ucl.nterreri.task3.Patient;
 
 public class PatientTableModel extends DefaultTableModel {
 
+	//TODO: http://stackoverflow.com/questions/1990817/how-to-make-a-jtable-non-editable
+	@Override
+	public boolean isCellEditable(int row, int column) {
+		return false;
+	}
 	
 	@Override
 	public int getRowCount() {

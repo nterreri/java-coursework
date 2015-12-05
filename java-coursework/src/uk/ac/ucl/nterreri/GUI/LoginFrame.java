@@ -12,6 +12,8 @@ import com.opencsv.CSVReader;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,30 +40,15 @@ public class LoginFrame extends JFrame implements ActionListener {
 	private ArrayList<String[]> loginData;
 	private String usernameIn;
 	private String passwordIn;
-
-
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					LoginFrame frame = new LoginFrame();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
+	private JButton btnLogIn;
+	private static boolean success = false;
 
 	/**
 	 * Create the frame.
 	 */
 	public LoginFrame() {
-
-
+		
+		//Retrive login data:
 		try{
 
 			loginData = (ArrayList<String[]>) fetchLoginData();
@@ -70,24 +57,45 @@ public class LoginFrame extends JFrame implements ActionListener {
 					loginData.get(i)[j].trim();
 			}
 
-		} catch(FileNotFoundException e) {
-			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			
+			JOptionPane.showMessageDialog(this, "Fatal error: login data file not found", "Fatal", JOptionPane.ERROR_MESSAGE);
 			System.err.println("Error reading login data file: file not found.\n" + 
 					"Terminating program.");
-			System.exit(1);
-		}
-		catch (IOException e){
 			e.printStackTrace();
+			System.exit(1);
+		} catch (IOException e){
+			
+			JOptionPane.showMessageDialog(this, "Fatal error: error reading login data", "Fatal", JOptionPane.ERROR_MESSAGE);
 			System.err.println("Error reading login data file.\n" + 
 					"Terminating program.");
+			e.printStackTrace();
+			System.exit(1);
+		} catch (Exception e) {
+
+			JOptionPane.showMessageDialog(this, "Fatal error: see console for details", "Fatal", JOptionPane.ERROR_MESSAGE);
+			System.err.println("Error reading login data file.\n" + 
+					"Terminating program.");
+			e.printStackTrace();
 			System.exit(1);
 		}
-		
+
+		//debug
 		for(int i = 0; i < loginData.size(); i++) {
 			for(int j = 0; j<2; j++)
 				System.out.println(loginData.get(i)[j]);
 		}
+		
+		//create the frame(mostly swing-designer-generated):
+		createFrame();
 
+		//register frame as actionlistener:
+		usernameField.addActionListener(this);
+		passwordField.addActionListener(this);
+		btnLogIn.addActionListener(this);	
+	}
+
+	private void createFrame() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 280, 252);
 		contentPane = new JPanel();
@@ -115,16 +123,14 @@ public class LoginFrame extends JFrame implements ActionListener {
 		lblPassword.setBounds(270/2 - 74/2, 77, 74, 15);
 
 		passwordField = new JPasswordField();
-		passwordField.addActionListener(this);
 		
 		passwordField.setBounds(270/2 - 134/2, 104, 134, 19);
 
 		JSeparator separator = new JSeparator();
 		separator.setBounds(12, 12, 256, 2);
 		
-		JButton btnLogIn = new JButton("Log in");
+		btnLogIn = new JButton("Log in");
 		btnLogIn.setBounds(270/2 - 117/2, 135, 117, 25);
-		btnLogIn.addActionListener(this);
 		panel.setLayout(null);
 		panel.add(label);
 		panel.add(usernameField);
@@ -138,39 +144,35 @@ public class LoginFrame extends JFrame implements ActionListener {
 		label_1.setFont(new Font("Dialog", Font.BOLD, 16));
 		label_1.setBounds(270/2 - 263/2, 22, 263, 19);
 		contentPane.add(label_1);
-	
+		
 	}
-
+	
 	private static List<String[]> fetchLoginData() throws FileNotFoundException, IOException{
 		CSVReader reader = new CSVReader(new FileReader("login_data"));
 		return reader.readAll();
 	}
 
 	private boolean validateLogin() {
+		//assume login is going to fail:
+		boolean result = false;
+		
 		//Checking for key validity:
 		int i = 0;
-		while(i < loginData.size())
+		for(;i < loginData.size(); i++)
 		{
-			//If username is found in username[],
-			if(usernameIn.equalsIgnoreCase(loginData.get(i)[0]))
+			if(usernameIn.equalsIgnoreCase(loginData.get(i)[0]))//If username is found in loginData,
 			{
-				//, proceed to compare password[],
-				if(passwordIn.equalsIgnoreCase(loginData.get(i)[1]))
-					return true;
-				
-				//, if password does not match, login failed
-				else	
-					return false;
+				result = (passwordIn.equalsIgnoreCase(loginData.get(i)[1])); //, proceed to compare password,
+				break;//, if password does not match, login failed
 			}
-
-			i++;
 		}
 		//If i is the size of loginData, then input username was not found
-		if(i == loginData.size())
-			return false;
-		return false; // if loginData.size() is 0
+		return result;
 	}
 
+	public static boolean getOutcome() {
+		return success;
+	}
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -178,9 +180,14 @@ public class LoginFrame extends JFrame implements ActionListener {
 		usernameIn = this.usernameField.getText();
 		passwordIn = new String(this.passwordField.getPassword());
 		if(validateLogin()) {
-			this.dispose(); //destroy this window, the main window should listen for this event
-			//from this frame
+			success = true;
+			this.dispose(); 
+			/* dispose() triggers a window event caught by this frame (the frame catches its own
+			* closing event, a check to static boolean success is performed to decide whether
+			* to allow the user to proceed to the patient records management frame*/
 		}
+		
+		JOptionPane.showMessageDialog(null, "Login failed");
 	}
 	
 }

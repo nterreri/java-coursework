@@ -5,6 +5,8 @@ import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -13,9 +15,11 @@ import javax.swing.ImageIcon;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -24,15 +28,25 @@ import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Vector;
 
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
@@ -44,19 +58,25 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.border.LineBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 import uk.ac.ucl.nterreri.task3.Patient;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Desktop;
+
 import javax.swing.JToggleButton;
 import javax.swing.JTextPane;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JScrollPane;
 
-public class PatientEditorFrame extends JDialog implements ActionListener {
+public class PatientEditorFrame extends JDialog implements ActionListener, HyperlinkListener {
 
 	private Patient patient;
 	private int indexInArrayList;
@@ -66,24 +86,27 @@ public class PatientEditorFrame extends JDialog implements ActionListener {
 	private JTextField textDOB;
 	private JTextField textPhone;
 	private JTextField textAddress;
-	private JTextArea txtAreaCondition;
+	private JEditorPane txtEditorCondition; //<- cannot be textarea because must allow for hyperlink
 	private JTextArea txtAreaAppointments;
 	private JTextArea txtAreaComments;
 	private JTextArea txtAreaBilling;
 	private JButton btnSaveButton;
 	private JToggleButton tglbtnToggleEditMode;
-	private JComboBox comboBox;
-	private JLabel lblPatientPic;
-	private JLabel lblConditionPic;
 	private JScrollPane scrollPaneCondition;
 	private JScrollPane scrollPaneAppointments;
 	private JScrollPane scrollPaneBilling;
 	private JScrollPane scrollPaneComments;
-	public	JTabbedPane tabbedPane;
+	JTabbedPane tabbedPane;		//<- has to be visible from JDialog generated from this frame
 	private JPanel panelPatientPic;
 	private JPanel panelConditionPic;
+	JComboBox comboBox;			//<- has to be visible from JDialog generated from this frame
+	PicturePopupMenu popupMenu;	//<- has to be visible from JDialog generated from this frame
+	JLabel lblPatientPic;		//<- has to be visible from JDialog generated from this frame
+	JLabel lblConditionPic;		//<- has to be visible from JDialog generated from this frame
 	private EditorFrameMouseListener mouseListener;
-	
+	private JTextField textCURLOverride;
+	private JLabel lblEnterConditionUrl;
+
 	/**
 	 * Launch the application.
 	 */
@@ -104,8 +127,8 @@ public class PatientEditorFrame extends JDialog implements ActionListener {
 	 * Create the frame.
 	 * @wbp.parser.constructor
 	 */
-	
-	
+
+
 	//the constructors call the jdialog constructor to establish parent-child relationship between mainframe and any (finite) number of
 	//editorframe jdialogs.
 	public PatientEditorFrame(JFrame parent, Patient patient) {
@@ -113,11 +136,11 @@ public class PatientEditorFrame extends JDialog implements ActionListener {
 		//setModalityType(Dialog.ModalityType.MODELESS); //In vain attempted to make parent jframe focus shift parent on top of children, see http://stackoverflow.com/questions/22259765/how-to-make-a-jdialog-not-always-on-top-of-parent
 		this.indexInArrayList = -1;
 		this.patient = patient;
-		
+
 		initialize();
-		//drawImage(); //does not draw image with newly created patient, for there will be no image
+
 	}
-	
+
 	public PatientEditorFrame(JFrame parent, Patient patient, int indexInArrayList) {
 		super(parent);
 		//setModalityType(Dialog.ModalityType.MODELESS); //In vain attempted to make parent jframe focus shift parent on top of children, see http://stackoverflow.com/questions/22259765/how-to-make-a-jdialog-not-always-on-top-of-parent
@@ -125,199 +148,360 @@ public class PatientEditorFrame extends JDialog implements ActionListener {
 		this.patient = patient;
 
 		initialize();
-		
+
 	}
 
 	private void initialize() {
+
+		mouseListener = new EditorFrameMouseListener();
+		popupMenu = new PicturePopupMenu();
+
+		setResizable(false);
+
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 827, 629);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
-		
+
+		Border textBorder = BorderFactory.createLineBorder(Color.BLACK);
+
 		textFirstName = new JTextField();
 		textFirstName.setEditable(false);
-		textFirstName.setBounds(23, 93, 168, 19);
+		textFirstName.setBorder(textBorder);
 		textFirstName.setColumns(10);
 		textFirstName.setText(patient.getFName());
-		
+
 		textLastName = new JTextField();
 		textLastName.setEditable(false);
-		textLastName.setBounds(251, 93, 202, 19);
+		textLastName.setBorder(textBorder);
 		textLastName.setColumns(10);
 		textLastName.setText(patient.getLName());
-		
+
 		JLabel lblFirstName = new JLabel("First Name:");
-		lblFirstName.setBounds(23, 72, 81, 15);
-		
+
 		JLabel lblLastName = new JLabel("Last Name:");
-		lblLastName.setBounds(251, 72, 80, 15);
-		
+
 		JLabel lblDateOfBirth = new JLabel("Date of Birth:");
-		lblDateOfBirth.setBounds(23, 143, 95, 15);
-		
+
 		textDOB = new JTextField();
 		textDOB.setEditable(false);
-		textDOB.setBounds(23, 164, 168, 19);
+		textDOB.setBorder(textBorder);
 		textDOB.setColumns(10);
 		textDOB.setText(patient.getDOB());
-		
+
 		JLabel lblEmergencyPhoneNumber = new JLabel("Emergency Phone:");
-		lblEmergencyPhoneNumber.setBounds(251, 143, 131, 15);
-		
+
 		textPhone = new JTextField();
 		textPhone.setEditable(false);
-		textPhone.setBounds(251, 164, 202, 19);
+		textPhone.setBorder(textBorder);
 		textPhone.setColumns(10);
 		textPhone.setText(patient.getEmergencyPhone());
-		
+
 		JLabel lblPersonalDetails = new JLabel("Personal Details:");
-		lblPersonalDetails.setBounds(31, 18, 149, 19);
 		lblPersonalDetails.setFont(new Font("Dialog", Font.BOLD, 16));
-		
+
 		textAddress = new JTextField();
 		textAddress.setEditable(false);
-		textAddress.setBounds(23, 225, 434, 19);
+		textAddress.setBorder(textBorder);
 		textAddress.setColumns(10);
 		textAddress.setText(patient.getAddress());
-		
+
 		JLabel lblAddress = new JLabel("Address:");
-		lblAddress.setBounds(23, 204, 63, 15);
-		
+
 		JSeparator separator = new JSeparator();
-		separator.setBounds(19, 272, 481, 2);
-		
+
 		JLabel lblMedicalData = new JLabel("Administartive data:");
-		lblMedicalData.setBounds(31, 286, 207, 19);
 		lblMedicalData.setFont(new Font("Dialog", Font.BOLD, 16));
-		
+
 		JLabel lblCondition = new JLabel("Condition:");
-		lblCondition.setBounds(19, 324, 73, 15);
-		
+
 		JLabel lblAppointments = new JLabel("Appointments:");
-		lblAppointments.setBounds(251, 324, 104, 15);
-		
+
 		JSeparator separator_1 = new JSeparator();
-		separator_1.setBounds(512, 29, 2, 559);
 		separator_1.setOrientation(SwingConstants.VERTICAL);
-		
-		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.setBounds(517, 17, 296, 236);
-		
+
 		tglbtnToggleEditMode = new JToggleButton("Edit Mode Off");
-		tglbtnToggleEditMode.setBounds(526, 572, 131, 25);
 		tglbtnToggleEditMode.addActionListener(this);
-		
+
 		JLabel label_1 = new JLabel("Comments:");
-		label_1.setBounds(527, 284, 79, 15);
-		
+
 		JLabel label_2 = new JLabel("Billing:");
-		label_2.setBounds(19, 476, 48, 15);
-		
-		txtAreaCondition = new JTextArea();
-		txtAreaCondition.setEditable(false);
-		//txtAreaCondition.setBounds(19, 345, 214, 111);
-		txtAreaCondition.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		txtAreaCondition.setLineWrap(true);
-		scrollPaneCondition = new JScrollPane(txtAreaCondition);
+
+		//credit TODO:http://stackoverflow.com/questions/3693543/hyperlink-in-jeditorpane
+		txtEditorCondition = new JEditorPane("text/html", "<a href=\"" + patient.getConditionURL() + "\">" + patient.getCondition() + "</a>");
+		txtEditorCondition.addHyperlinkListener(this);
+		txtEditorCondition.setEditable(false);
+		//txtEditorCondition.setBounds(19, 345, 214, 111);
+		txtEditorCondition.setBorder(textBorder);
+		//txtEditorCondition.setLineWrap(true);
+
+
+
+		scrollPaneCondition = new JScrollPane(txtEditorCondition);
 		scrollPaneCondition.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPaneCondition.setBounds(19, 345, 214, 111);
-		contentPane.add(scrollPaneCondition);
 		//contentPane.add(txtAreaCondition);
-		
+
 		txtAreaAppointments = new JTextArea();
 		txtAreaAppointments.setEditable(false);
 		//txtAreaAppointments.setBounds(251, 345, 249, 111);
-		txtAreaAppointments.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		txtAreaAppointments.setBorder(textBorder);
 		txtAreaAppointments.setLineWrap(true);
 		scrollPaneAppointments = new JScrollPane(txtAreaAppointments);
 		scrollPaneAppointments.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPaneAppointments.setBounds(251, 345, 249, 111);
-		contentPane.add(scrollPaneAppointments);
-		
+
 		txtAreaComments = new JTextArea();
 		txtAreaComments.setEditable(false);
 		//txtAreaComments.setBounds(526, 311, 287, 255);
-		txtAreaComments.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		txtAreaComments.setBorder(textBorder);
 		txtAreaComments.setLineWrap(true);
 		scrollPaneComments= new JScrollPane(txtAreaComments);
 		scrollPaneComments.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPaneComments.setBounds(526, 311, 287, 255);
-		contentPane.add(scrollPaneComments);
-		
-		mouseListener = new EditorFrameMouseListener();
-		
+
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+
 		panelPatientPic = new JPanel();
 		tabbedPane.addTab("Patient Pic", null, panelPatientPic, null);
 		panelPatientPic.setLayout(new BorderLayout(0, 0));
-		
-		lblPatientPic = new JLabel("Patient Profile Image");
+		panelPatientPic.setBounds(517, 17, 296, 236);
+
+		lblPatientPic = new JLabel();
 		lblPatientPic.setHorizontalAlignment(SwingConstants.CENTER);
-		
+		lblPatientPic.setIcon(null);
 		panelPatientPic.add(lblPatientPic);
-		
-		
+		//tabbedPane.addTab("Patient Pic", null, lblPatientPic, null);
+
 		panelConditionPic = new JPanel();
 		tabbedPane.addTab("Condition Pic", null, panelConditionPic, null);
 		panelConditionPic.setLayout(new BorderLayout(0, 0));
-		
-		lblConditionPic = new JLabel("Image Placeholder");
+		panelConditionPic.setBounds(517, 17, 296, 236);
+
+		lblConditionPic = new JLabel();
 		lblConditionPic.setHorizontalAlignment(SwingConstants.CENTER);
+		lblConditionPic.setIcon(null);
 		panelConditionPic.add(lblConditionPic);
-		contentPane.setLayout(null);
-		contentPane.add(lblPersonalDetails);
-		contentPane.add(textFirstName);
-		contentPane.add(lblFirstName);
-		contentPane.add(lblAddress);
-		contentPane.add(textAddress);
-		contentPane.add(lblDateOfBirth);
-		contentPane.add(textDOB);
-		contentPane.add(lblEmergencyPhoneNumber);
-		contentPane.add(textPhone);
-		contentPane.add(lblLastName);
-		contentPane.add(textLastName);
-		contentPane.add(label_2);
-		contentPane.add(lblMedicalData);
-		contentPane.add(lblCondition);
-		//contentPane.add(txtAreaCondition);
-		contentPane.add(lblAppointments);
-		//contentPane.add(txtAreaAppointments);
-		contentPane.add(separator);
-		contentPane.add(separator_1);
-		contentPane.add(tabbedPane);
-		//contentPane.add(txtAreaComments);
-		contentPane.add(label_1);
-		contentPane.add(tglbtnToggleEditMode);
-		
+
 		btnSaveButton = new JButton("Save Changes");
 		btnSaveButton.setHorizontalAlignment(SwingConstants.LEADING);
-		btnSaveButton.setBounds(669, 572, 144, 25);
 		btnSaveButton.addActionListener(this);
-		contentPane.add(btnSaveButton);
-		
+
 		txtAreaBilling = new JTextArea();
 		txtAreaBilling.setEditable(false);
 		//txtAreaBilling.setBounds(19, 490, 214, 88);
-		txtAreaBilling.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		txtAreaBilling.setBorder(textBorder);
 		txtAreaBilling.setLineWrap(true);
 		scrollPaneBilling= new JScrollPane(txtAreaBilling);
 		scrollPaneBilling.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPaneBilling.setBounds(19, 490, 214, 88);
-		contentPane.add(scrollPaneBilling);
 		//contentPane.add(scrollPaneComments);
-		
+
 		comboBox = new JComboBox();
-		comboBox.setModel(new DefaultComboBoxModel(new String[] {"Select Condition Pic"}));
-		comboBox.setEnabled(false);
-		comboBox.setBounds(517, 250, 214, 24);
-		contentPane.add(comboBox);
-		
-		if(patient.getPatientPicture() != null)
-			drawImage();	//draws patient profile picture image and scales to tabbedPane size
+		comboBox.setModel(fetchComboBoxModel());
+		comboBox.setEnabled(true);
+		comboBox.addActionListener(this);
+
+		textCURLOverride = new JTextField();
+		textCURLOverride.setBorder(textBorder);
+		textCURLOverride.setColumns(10);
+		textCURLOverride.setEditable(false);
+
+		lblEnterConditionUrl = new JLabel("Override default condition URL:");
+		lblEnterConditionUrl.setVerticalAlignment(SwingConstants.TOP);
+		GroupLayout gl_contentPane = new GroupLayout(contentPane);
+		gl_contentPane.setHorizontalGroup(
+				gl_contentPane.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_contentPane.createSequentialGroup()
+						.addGap(14)
+						.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(12)
+										.addComponent(lblPersonalDetails))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(4)
+										.addComponent(lblFirstName)
+										.addGap(147)
+										.addComponent(lblLastName))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(4)
+										.addComponent(textFirstName, GroupLayout.PREFERRED_SIZE, 210, GroupLayout.PREFERRED_SIZE)
+										.addGap(18)
+										.addComponent(textLastName, GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(4)
+										.addComponent(lblDateOfBirth)
+										.addGap(133)
+										.addComponent(lblEmergencyPhoneNumber))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(4)
+										.addComponent(textDOB, GroupLayout.PREFERRED_SIZE, 210, GroupLayout.PREFERRED_SIZE)
+										.addGap(18)
+										.addComponent(textPhone, GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(4)
+										.addComponent(lblAddress))
+								.addComponent(separator, GroupLayout.PREFERRED_SIZE, 481, GroupLayout.PREFERRED_SIZE)
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(12)
+										.addComponent(lblMedicalData, GroupLayout.PREFERRED_SIZE, 207, GroupLayout.PREFERRED_SIZE))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(4)
+										.addComponent(lblCondition)
+										.addGap(152)
+										.addComponent(lblEnterConditionUrl, GroupLayout.PREFERRED_SIZE, 252, GroupLayout.PREFERRED_SIZE))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING)
+												.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+														.addGroup(gl_contentPane.createSequentialGroup()
+																.addGap(8)
+																.addComponent(label_2))
+														.addGroup(gl_contentPane.createSequentialGroup()
+																.addGap(4)
+																.addComponent(scrollPaneBilling, GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)))
+												.addGroup(Alignment.LEADING, gl_contentPane.createSequentialGroup()
+														.addGap(4)
+														.addComponent(scrollPaneCondition, GroupLayout.PREFERRED_SIZE, 214, GroupLayout.PREFERRED_SIZE)))
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addGroup(gl_contentPane.createSequentialGroup()
+														.addGap(12)
+														.addComponent(textCURLOverride, GroupLayout.PREFERRED_SIZE, 251, GroupLayout.PREFERRED_SIZE))
+												.addGroup(gl_contentPane.createSequentialGroup()
+														.addGap(48)
+														.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+																.addComponent(lblAppointments)
+																.addComponent(scrollPaneAppointments, GroupLayout.PREFERRED_SIZE, 215, GroupLayout.PREFERRED_SIZE)))))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(4)
+										.addComponent(textAddress, GroupLayout.DEFAULT_SIZE, 471, Short.MAX_VALUE)))
+						.addGap(12)
+						.addComponent(separator_1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+						.addGap(3)
+						.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+								.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, 214, GroupLayout.PREFERRED_SIZE)
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(10)
+										.addComponent(label_1))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(9)
+										.addComponent(tglbtnToggleEditMode, GroupLayout.PREFERRED_SIZE, 131, GroupLayout.PREFERRED_SIZE)
+										.addGap(12)
+										.addComponent(btnSaveButton, GroupLayout.PREFERRED_SIZE, 144, GroupLayout.PREFERRED_SIZE))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(9)
+										.addComponent(scrollPaneComments, GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE))
+								.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE))
+						.addContainerGap())
+				);
+		gl_contentPane.setVerticalGroup(
+				gl_contentPane.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_contentPane.createSequentialGroup()
+						.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(13)
+										.addComponent(lblPersonalDetails)
+										.addGap(35)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addComponent(lblFirstName)
+												.addComponent(lblLastName))
+										.addGap(6)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addComponent(textFirstName, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
+												.addComponent(textLastName, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
+										.addGap(31)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addComponent(lblDateOfBirth)
+												.addComponent(lblEmergencyPhoneNumber))
+										.addGap(6)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addGroup(gl_contentPane.createSequentialGroup()
+														.addComponent(textDOB, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
+														.addGap(21)
+														.addComponent(lblAddress))
+												.addComponent(textPhone, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
+										.addPreferredGap(ComponentPlacement.RELATED)
+										.addComponent(textAddress, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
+										.addGap(28)
+										.addComponent(separator, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addGap(12)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING)
+												.addGroup(gl_contentPane.createSequentialGroup()
+														.addComponent(lblMedicalData)
+														.addGap(19)
+														.addComponent(label_2))
+												.addComponent(lblAppointments))
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addGroup(gl_contentPane.createSequentialGroup()
+														.addGap(8)
+														.addComponent(scrollPaneBilling, GroupLayout.PREFERRED_SIZE, 109, GroupLayout.PREFERRED_SIZE))
+												.addGroup(gl_contentPane.createSequentialGroup()
+														.addGap(6)
+														.addComponent(scrollPaneAppointments, GroupLayout.PREFERRED_SIZE, 111, GroupLayout.PREFERRED_SIZE)))
+										.addGap(24)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addComponent(lblCondition)
+												.addComponent(lblEnterConditionUrl))
+										.addGap(6)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+												.addComponent(scrollPaneCondition, GroupLayout.PREFERRED_SIZE, 55, GroupLayout.PREFERRED_SIZE)
+												.addGroup(gl_contentPane.createSequentialGroup()
+														.addGap(6)
+														.addComponent(textCURLOverride, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(24)
+										.addComponent(separator_1, GroupLayout.PREFERRED_SIZE, 559, GroupLayout.PREFERRED_SIZE))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addGap(245)
+										.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addGap(10)
+										.addComponent(label_1)
+										.addGap(12)
+										.addComponent(scrollPaneComments, GroupLayout.PREFERRED_SIZE, 255, GroupLayout.PREFERRED_SIZE)
+										.addPreferredGap(ComponentPlacement.RELATED)
+										.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING, false)
+												.addComponent(tglbtnToggleEditMode, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+												.addComponent(btnSaveButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+								.addGroup(gl_contentPane.createSequentialGroup()
+										.addContainerGap()
+										.addComponent(tabbedPane, GroupLayout.PREFERRED_SIZE, 236, GroupLayout.PREFERRED_SIZE)))
+						.addContainerGap(27, Short.MAX_VALUE))
+				);
+		contentPane.setLayout(gl_contentPane);
+
+
+		refreshPictures();
+
 	}
-	
+
+	private void refreshPictures() {
+		try {
+			if(!( patient.getPatientPicture() == null || patient.getPatientPicture().length() == 0 ))
+				drawPicture(patient.getPatientPicture(), panelPatientPic);	//draws patient profile picture image and scales to tabbedPane size
+				//drawPicture(patient.getPatientPicture(), lblPatientPic);
+			if(patient.getConditionPictures() != null) 
+				drawPicture(patient.getConditionPictures()[0], panelConditionPic);	//draws patient profile picture image and scales to tabbedPane size
+				//drawPicture(patient.getConditionPictures()[0], lblConditionPic);
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, (Object)("Unable to load one or more images\n"
+					+ "Some pictures will not be displayed"),
+					"Error loading image", JOptionPane.WARNING_MESSAGE);
+		}		
+	}
+
+
+	DefaultComboBoxModel fetchComboBoxModel() {
+		DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
+		//comboBoxModel.addElement("- Select Condition Pic -");	//removed coaching to extract an index for the condition pic
+
+		String[] restOfModel = patient.getConditionPictures();
+
+		if(restOfModel != null)	//restOfModel will be null where there are no condition pics
+			for(int i = 0; i < restOfModel.length; i++)
+				comboBoxModel.addElement(restOfModel[i]);
+
+		return comboBoxModel;
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
+
 		if(e.getSource() == tglbtnToggleEditMode) {
 			if(tglbtnToggleEditMode.isSelected()) {
 				tglbtnToggleEditMode.setText("Edit Mode On");
@@ -326,15 +510,16 @@ public class PatientEditorFrame extends JDialog implements ActionListener {
 				textDOB.setEditable(true);
 				textPhone.setEditable(true);
 				textAddress.setEditable(true);
-				txtAreaCondition.setEditable(true);
+				textCURLOverride.setEditable(true);
+				txtEditorCondition.setEditable(true);
 				txtAreaAppointments.setEditable(true);
 				txtAreaComments.setEditable(true);
 				txtAreaBilling.setEditable(true);
 				//txtAreaBilling.setBackground(textFirstName.getBackground());
-				lblPatientPic.addMouseListener(this.mouseListener);
-				
+				lblPatientPic.addMouseListener(mouseListener);
+				lblConditionPic.addMouseListener(mouseListener);
 
-				
+
 			} else {
 				tglbtnToggleEditMode.setText("Edit Mode Off");
 				textFirstName.setEditable(false);
@@ -342,97 +527,305 @@ public class PatientEditorFrame extends JDialog implements ActionListener {
 				textDOB.setEditable(false);
 				textPhone.setEditable(false);
 				textAddress.setEditable(false);
-				txtAreaCondition.setEditable(false);
+				textCURLOverride.setEditable(false);
+				//txtEditorCondition.setEditable(false);
 				txtAreaAppointments.setEditable(false);
 				txtAreaComments.setEditable(false);
 				txtAreaBilling.setEditable(false);
 				//txtAreaBilling.setBackground(UIManager.getColor("TextField.background"));//did not work to set background color to the same as a disabled jtextfield
 				//txtAreaBilling.setBackground(contentPane.getBackground());
+				lblPatientPic.removeMouseListener(mouseListener);
+				lblConditionPic.removeMouseListener(mouseListener);
+
+				refreshPictures();
+
+				try {
+					patient.setCondition(txtEditorCondition.getText());
+				} catch (MalformedURLException excp) {
+					JOptionPane.showMessageDialog(this, "Condition URL not well formed\n", "Error", JOptionPane.ERROR_MESSAGE);
+					//this should never happen
+				}
+				txtEditorCondition.setText("<body><a href=\"" + patient.getConditionURL() + "\">" + patient.getCondition() + "</a></body>");
+				txtEditorCondition.setEditable(false);
 
 			}
+
 		} else if(e.getSource() == btnSaveButton) {
-			
-			
 			//String errorMessage = "";
-			
-			//originally, more varied exceptions than just were predicted than just ParseException
+
 			try {
 				patient.setLastNameNoCheck(textLastName.getText());
 				patient.setFirstNameNoCheck(textFirstName.getText());
 				patient.setDOB(textDOB.getText());
 				patient.setAddress(textAddress.getText());
 				patient.setEmergencyPhone(textPhone.getText());
-				patient.setCondition(txtAreaCondition.getText());
+				patient.setCondition(txtEditorCondition.getText());
 				patient.setAppointments(txtAreaAppointments.getText());
 				patient.setBilling(txtAreaBilling.getText());
 				patient.setComments(txtAreaComments.getText());
-				
+
+
+				if((textCURLOverride.getText()) != null && !(textCURLOverride.getText()).equals(""))	//override default url if user typed text into the override field
+					patient.setConditionURL(textCURLOverride.getText());
+
 				if(indexInArrayList < 0)
 					patient.addRecord();
 				else
 					Patient.editRecord(patient, indexInArrayList);
-				
+
 				try {
 					Patient.updateRecordsFile();
 					JOptionPane.showMessageDialog(this, "Patient edit successful");
 				} catch (IOException excp) {
 					JOptionPane.showMessageDialog(this, "Error", "Patient edit unsuccessful:\n" +
-																"unable to write to file.", JOptionPane.ERROR_MESSAGE);
+							"unable to write to file.", JOptionPane.ERROR_MESSAGE);
 				}
-				
+
 			} catch (ParseException excp) {
 				JOptionPane.showMessageDialog(this, "DOB must be in dd/mm/yyyy format.\n", "Error", JOptionPane.ERROR_MESSAGE);
 			} catch (NumberFormatException excp) {
 				JOptionPane.showMessageDialog(this, "Phone number must be exactly 10 digits long.\n", "Error", JOptionPane.ERROR_MESSAGE);
-			}	
+			} catch (MalformedURLException excp) {
+				JOptionPane.showMessageDialog(this, "Condition URL not well formed\n", "Error", JOptionPane.ERROR_MESSAGE);
+			}
 			//would have been better to show a single, cumulative error message
 			/*if(errorMessage.length() > 1)
 				JOptionPane.showMessageDialog(this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);*/
-			
-			
+
+		} else if((e.getSource() == comboBox)/* && (comboBox.getSelectedIndex() != 0)*/) {
+			try {
+				drawPicture((String)comboBox.getSelectedItem(), lblConditionPic);
+			} catch (Exception excp) {
+				JOptionPane.showMessageDialog(this, (Object)("Unable to load selected condition image\n"
+						+ "No condition pictures will be displayed"),
+						"Error loading image", JOptionPane.WARNING_MESSAGE);
+			}
+			tabbedPane.setSelectedIndex(1);
+
 		} 
 	}
-	
+
 	//felt like placing this in a separate class would fragment the source code when this is only needed within the present
 	//Jdialog extension
+	//https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html
 	private class EditorFrameMouseListener extends MouseAdapter {
-		
-		@Override
+
+		/*@Override
 		public void mouseClicked(MouseEvent e) {
 			//Object [] options = {"From file", "From URL", "Cancel" };
-			
-			/*JOptionPane.showOptionDialog(PatientEditorFrame.this, "How would you like to change the picture:", "Picture Source Selection", 
-					JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);*/
-			
+
+			//JOptionPane.showOptionDialog(PatientEditorFrame.this, "How would you like to change the picture:", "Picture Source Selection", 
+			//		JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
 			//TODO credit: http://stackoverflow.com/questions/1816458/getting-hold-of-the-outer-class-object-from-the-inner-class-object
-			EditorPicChooser dialog = new EditorPicChooser(PatientEditorFrame.this, patient);
+			/*EditorPicChooser dialog = new EditorPicChooser(PatientEditorFrame.this, e.getComponent(), patient);
 			dialog.setVisible(true);
+			
+		}*/
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if(e.isPopupTrigger()) {
+				popUp(e);
+			}
+
 		}
-		
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			if(e.isPopupTrigger()) {
+				popUp(e);
+			}
+
+		}
+
+		private void popUp(MouseEvent e){
+			popupMenu.source = e.getComponent();
+
+			if(popupMenu.source == lblPatientPic)
+				popupMenu.itemAdd.setText("Replace Profile Pic");
+
+			else
+				popupMenu.itemAdd.setText("Add New Pic");
+
+			popupMenu.show(e.getComponent(), e.getX(), e.getY());
+		}
+
 		/*public PatientEditorFrame getOuter() {
 			return PatientEditorFrame.this;
 		}*/
-		
+
+	}
+
+	class PicturePopupMenu extends JPopupMenu implements ActionListener {
+
+		Component source;
+		JMenuItem itemAdd;
+		JMenuItem itemRemove;
+
+		PicturePopupMenu() {
+
+			itemAdd = new JMenuItem("Add New Pic");
+			itemAdd.addActionListener(this);
+			add(itemAdd);
+
+
+			itemRemove = new JMenuItem("Remove Current Pic");
+			itemRemove.addActionListener(this);
+			add(itemRemove);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+
+			if(e.getSource() == itemAdd) {
+				EditorPicChooser dialog = new EditorPicChooser(PatientEditorFrame.this, source, patient); //should change to "getInstance()" or similar
+				dialog.setVisible(true);
+				
+
+			} else if(e.getSource() == itemRemove) {
+				if(JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(PatientEditorFrame.this, "Remove picture?", "Confirm", JOptionPane.OK_CANCEL_OPTION)) {
+					
+					//add option to remove profile pic
+					if(source == lblConditionPic) {
+						patient.removeConditionPicture(comboBox.getSelectedIndex());
+						//set blank label:
+						lblConditionPic.setIcon(null);
+					} else if (source == lblPatientPic) {
+						patient.removePatientPicture();
+						//set blank label:
+						lblPatientPic.setIcon(null);
+					}
+					
+					/*lblPatientPic = new JLabel();
+					lblPatientPic.setHorizontalAlignment(SwingConstants.CENTER);
+					panelPatientPic.add(lblPatientPic);*/
+
+					
+					//update combobox model:
+					comboBox.setModel(fetchComboBoxModel());
+				}
+			}
+		}
+	}
+
+	@Deprecated
+	private void drawPictures() {
+
+		//completely broken
+		try {
+			//drawPicture(patient.getPatientPicture(), panelPatientPic);//broken
+		} catch (Exception e) {		
+			//e.printStackTrace();//debug
+			JOptionPane.showMessageDialog(this, (Object)("Unable to load profile image\n"
+					+ "No patient picture will be displayed"),
+					"Error loading image", JOptionPane.WARNING_MESSAGE);
+		}
+
+		try {
+			//drawPicture(patient.getConditionPictures()[0], panelConditionPic);//broken
+		} catch (Exception e) {		
+			//e.printStackTrace();//debug
+			JOptionPane.showMessageDialog(this, (Object)("Unable to load condition image\n"
+					+ "Some condition pictures will not be displayed"),
+					"Error loading image", JOptionPane.WARNING_MESSAGE);
+		}
+
+
+		/*String [] conditionPictures = patient.getConditionPictures();
+		boolean allPicsLoaded = true;
+		for(int i = 0; i < conditionPictures.length; i++ ) {
+
+			try {
+				drawPicture(conditionPictures[i], panelConditionPic);
+			} catch (Exception e) {					
+				e.printStackTrace();
+				allPicsLoaded = false;
+			}
+		}
+
+		if(!allPicsLoaded) {
+			JOptionPane.showMessageDialog(this, (Object)("Unable to load some condition images\n"
+					+ "Some condition pictures will not be displayed"),
+					"Error loading image", JOptionPane.WARNING_MESSAGE);
+		}*/
+
+	}
+
+	//earlier version
+	/*void drawPicture(String source, JComponent component) throws Exception {
+		//TODO: credit http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing
+		//TODO: and credit http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
+
+		Image img = ImageIO.read(new URL(source));			//<-this may throw an IOException or MalformedURLException
+		BufferedImage resizedImg = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = resizedImg.createGraphics();
+
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g2.drawImage(img, 0, 0, component.getWidth(), component.getHeight(), null);
+		g2.dispose();
+
+		((JLabel)component.getComponent(0)).setIcon(new ImageIcon(resizedImg));
+
+
+	}*/
+	
+
+	void drawPicture(String source, JPanel component) throws Exception {
+		//TODO: credit http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing
+		//TODO: and credit http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
+
+		Image img = ImageIO.read(new URL(source));			//<-this may throw an IOException or MalformedURLException
+		BufferedImage resizedImg = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = resizedImg.createGraphics();
+
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g2.drawImage(img, 0, 0, component.getWidth(), component.getHeight(), null);
+		g2.dispose();
+
+		((JLabel)component.getComponent(0)).setIcon(new ImageIcon(resizedImg));
+
+
 	}
 	
-	private void drawImage() {
+	void drawPicture(String source, JLabel component) throws Exception {
 		//TODO: credit http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing
-				//TODO: and credit http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
-				try {
-					Image img = ImageIO.read(new URL(patient.getPatientPicture()));//<-this may throw an IOException or MalformedURLException
-					BufferedImage resizedImg = new BufferedImage(tabbedPane.getWidth(), tabbedPane.getHeight(), BufferedImage.TYPE_INT_ARGB);
-					Graphics2D g2 = resizedImg.createGraphics();
-					
-					g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-					g2.drawImage(img, 0, 0, tabbedPane.getWidth(), tabbedPane.getHeight(), null);
-					g2.dispose();
-					
-					lblPatientPic.setIcon(new ImageIcon(resizedImg));	//<-this throws a null pointer exception where the URL does not point to an image
-																		
-				} catch (Exception e) {							
-					JOptionPane.showMessageDialog(this, (Object)("Unable to load profile image\n"
-							+ "No patient picture will be displayed"),
-							"Error displaying image", JOptionPane.WARNING_MESSAGE);
-				}
+		//TODO: and credit http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
+
+		Image img = ImageIO.read(new URL(source));			//<-this may throw an IOException or MalformedURLException
+		BufferedImage resizedImg = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = resizedImg.createGraphics();
+
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g2.drawImage(img, 0, 0, component.getWidth(), component.getHeight(), null);
+		g2.dispose();
+
+		component.setIcon(new ImageIcon(resizedImg));
+
+
 	}
+
+
+	//TODO: http://stackoverflow.com/questions/10967451/open-a-link-in-browser-with-java-button
+	//TODO: http://stackoverflow.com/questions/3693543/hyperlink-in-jeditorpane
+	@Override
+	public void hyperlinkUpdate(HyperlinkEvent e) {
+		if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+
+			if(Desktop.isDesktopSupported()) {
+
+				try{ 
+					Desktop.getDesktop().browse(new URL(patient.getConditionURL()).toURI());
+
+				} catch (URISyntaxException excp) {
+					JOptionPane.showMessageDialog(this, "Unable to open URL: invalid URL");
+
+				} catch (IOException excp ) {
+					JOptionPane.showMessageDialog(this, "Unable to open URL: connection error");
+
+				}
+			}
+		}
+	}
+
 }

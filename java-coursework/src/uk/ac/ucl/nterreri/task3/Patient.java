@@ -7,13 +7,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
+
+import org.jsoup.Jsoup;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
@@ -65,7 +70,7 @@ public class Patient {
 	private String conditionURL = null;				//12 in patientRecords String array element
 	private static ArrayList<String[]> patientRecords; // = new List<String[]>(13);
 	private static File recordsFile;// = new File();
-	public static final int ELEMENTS = 13;			//number of elements in the arraylist
+	public static final int ELEMENTS = 13;			//number of elements in each member of the arraylist
 
 	//instance constructors:
 	/**
@@ -77,14 +82,14 @@ public class Patient {
 	 * @see getNextId()
 	 */
 	public Patient() throws NumberFormatException {
-		conditionPictures = new String();	//this must be reinitialized at instance creation because its default value should be
+		conditionPictures = new String();//this must be reinitialized at instance creation because its default value should be
 		//null, but the modifier methods of this private field append content to the string, and a null value will remain at the start
 		//of the string if this is not reinitialized.
-		
+
 		this.patientId = Integer.toString(getNextId());	
-		
+
 	}
-	
+
 	//should return selected patient
 	public Patient(int indexInArrayList) {
 		//"manually" set every field:
@@ -137,11 +142,11 @@ public class Patient {
 	}
 
 	//getters:
-	
+
 	public static ArrayList<String[]> getPatientRecords() {
 		return patientRecords;
 	}
-	
+
 	public String getPatientId() {
 		return patientId;
 	}
@@ -154,8 +159,16 @@ public class Patient {
 		return fName;
 	}
 
-	public String getConditionPictures() {
-		return conditionPictures;
+	public String[] getConditionPictures() {
+		String[] returnVal;
+		
+		if(conditionPictures.length() != 0) {
+			returnVal = conditionPictures.split("\\s+");
+		} else {
+			returnVal = null;
+		}
+		
+		return returnVal;
 	}
 
 	public String getDOB() {
@@ -194,7 +207,7 @@ public class Patient {
 		return conditionURL;
 	}
 
-	
+
 	//setters:
 	/**
 	 * Sets first and last name of patient, throws an exception if the initial character
@@ -318,15 +331,30 @@ public class Patient {
 		this.address = address;
 	}
 
+	//TODO http://stackoverflow.com/questions/3507353/how-to-parse-only-text-from-html
 	/**
-	 * Sets patient condition, no checks performed.
+	 * Sets patient condition.<p>
+	 * Will parse the html document which is the text displayed in
+	 * a PatientEditorFrame's "Condition" editor pane, and extract text
+	 * from the body of the html.<p>
+	 * 
+	 * When typing into a JEditorPane which has been set to "text/html",
+	 * the text typed will automatically between the "body" tags of the html document.
+	 * Therefore, the text conted typed by the user must be retrieved by extracting it.<p>
+	 * 
+	 * The text extracted is appeneded to the string "https://en.wikipedia.org/wiki/"
+	 * to automatically provide a default hyperreference for the patient's condition.<p>
+	 * 
+	 * Uses Jsoup: http://jsoup.org/<p>
 	 * 
 	 * @param condition
+	 * @throws MalformedURLException 
+	 * @see JEditorPane
 	 */
-	public void setCondition(String condition) {
+	public void setCondition(String condition) throws MalformedURLException {
 
-		//condition can be garbage:
-		this.condition = condition;
+		this.condition = Jsoup.parse(condition).body().text();
+		setConditionURL("https://en.wikipedia.org/wiki/" + this.condition);
 	}
 
 	/**
@@ -371,16 +399,22 @@ public class Patient {
 	 * @param patientPicture
 	 * @throws MalformedURLException
 	 */
-	public void setPatientPicture(String patientPictureURL) throws MalformedURLException{
+	public void setPatientPictureURL(String patientPictureURL) throws MalformedURLException{
 
 		URL constructionAttempt = new URL(patientPictureURL);
 		this.patientPicture = patientPictureURL;
 	}
 
-	public void setPatientPicture(File patientPicture) throws IOException, FileNotFoundException{
+	public void setPatientPictureFilepath(String patientPicturePath) throws FileNotFoundException, URISyntaxException{
 
-		patientPicture.isFile();
-		this.patientPicture = patientPicture.getAbsolutePath();
+		if(new File(new URI(patientPicturePath)).isFile())
+			this.patientPicture = patientPicturePath;
+		else
+			throw new FileNotFoundException();
+		//if the file is chosen through filechooser it should not fail to find the file
+		//the original version of this method had a File parameter, this was designed to receive
+		//a file directly from the filechooser, this made it hard to retrieve the absolute path
+		//preceeded by the file protocol for storage inside a String/file, so the idea was discarded
 	}
 
 	/**
@@ -395,12 +429,17 @@ public class Patient {
 		new URL(conditionPictureURL);
 		this.conditionPictureURL = conditionPictureURL;
 	}*/
+
+	public void removePatientPicture() {
+		this.patientPicture = "";
+		
+	}
 	
 	public void addConditionPicture(String conditionPictureURL) throws MalformedURLException {
 		new URL(conditionPictureURL);
 		this.conditionPictures += conditionPictureURL + " ";
 	}
-	
+
 	public void addConditionPicture(File conditionPictureFile) throws FileNotFoundException {
 		if(conditionPictureFile.exists())
 			this.conditionPictures += conditionPictureFile.getAbsolutePath() + " ";
@@ -408,6 +447,18 @@ public class Patient {
 			throw new FileNotFoundException();
 	}
 
+	public void removeConditionPicture(int conditionPicIndex) throws IndexOutOfBoundsException {
+		
+		String[] condPicArrBuffer = getConditionPictures();
+		condPicArrBuffer[conditionPicIndex] = "";
+		//this.conditionPictures = Arrays.toString(getConditionPictures()); results in "[http1","http2","http3]", not good for our purposes
+		this.conditionPictures = "";
+		for(int i = 0; i < condPicArrBuffer.length; i++)
+			this.conditionPictures += condPicArrBuffer[i] + " ";
+		
+	}
+	
+	
 	/**
 	 * Sets patient condition description URL unless URL is malformed, in which case
 	 * an exception is thrown.
@@ -442,6 +493,7 @@ public class Patient {
 		this.emergencyPhone = emergencyPhone;
 	}
 
+	//has to be static to be used in importCSV()
 	/**
 	 * 
 	 * @return the next integer after the patient id number of the last registered patient,
@@ -451,11 +503,18 @@ public class Patient {
 	 * @throws NumberFormatException
 	 * @see Patient()
 	 */
-	public int getNextId() throws NumberFormatException {
+	public static int getNextId() throws NumberFormatException {
 		//the last int is obtained by parsing the first element of the last String 
 		//array in the static field "patientRecords":
-		int next_id = Integer.parseInt(patientRecords.get(patientRecords.size() - 1)[0]) + 1;
-		
+		int next_id;
+		try{
+
+			next_id = Integer.parseInt(patientRecords.get(patientRecords.size() - 1)[0]) + 1;
+		} catch (ArrayIndexOutOfBoundsException e) {
+			//if patientRecords is not initialized, set next_id to base:
+			next_id = 1000;
+		}
+
 		/*int next_id = 1001;
 		try {
 			next_id = Integer.parseInt(patientRecords.get(patientRecords.size() - 1)[0]) + 1;
@@ -506,14 +565,14 @@ public class Patient {
 		String [] thisRecord = { patientId, lName, fName, DOB, address, emergencyPhone, condition, 
 				appointments, billing, comments ,patientPicture,	conditionPictures,
 				conditionURL, };
-		if(!checkIDConsistency())
-			{
-				this.patientId = Integer.toString(getNextId());
-				thisRecord[0] = this.patientId;
-			}
+		
+		if(!checkIDConsistency()) {
+			this.patientId = Integer.toString(getNextId());
+			thisRecord[0] = this.patientId;
+		}
 		patientRecords.add(thisRecord);
 	}
-	
+
 	public static void editRecord(Patient editedPatient, int indexInArrayList) {
 		patientRecords.set(indexInArrayList, editedPatient.toStringArr());
 	}
@@ -534,11 +593,11 @@ public class Patient {
 				this.conditionPictures + ", " + 
 				this.conditionURL;
 	}
-	
+
 	public String[] toStringArr() {
 		return this.toString().split(", ");
 	}
-	
+
 	/**
 	 * Called by addRecord() to check for patient id consistency.
 	 * 
@@ -551,7 +610,7 @@ public class Patient {
 		else
 			return true;
 	}
-	
+
 	/**
 	 * Reads patient data from default file into the patientRecords field.
 	 * 
@@ -585,7 +644,92 @@ public class Patient {
 		csvw.close();
 		fw.close();
 	}
+	
+	public static void exportCSV(File exportFile) throws IOException {
 
+		FileWriter fw = new FileWriter(exportFile);
+		CSVWriter csvw = new CSVWriter(fw);
+
+		csvw.writeAll(patientRecords);
+		csvw.flush();
+
+		csvw.close();
+		fw.close();
+	}
+
+	public static void importCSV(File importFile) throws IOException {
+		//reenable eventually:
+		//backup(recordsFile);
+		//method();
+		
+		BufferedReader fr = new BufferedReader(new FileReader(importFile));
+		FileWriter fw = new FileWriter(recordsFile.getPath(), true);
+
+		CSVReader csvr = new CSVReader(fr);
+		CSVWriter csvw = new CSVWriter(fw);
+		
+		String[] nextLine;
+		String[] buffer;
+		
+		nextLine = csvr.readNext();
+		buffer = new String[ELEMENTS];
+		
+		//Vector<String[]> synchronousList = new Vector<String[]>(patientRecords);
+		
+		while(nextLine != null && nextLine.length > 0 ) {
+			
+			buffer[0] = Integer.toString(getNextId());
+			for(int i = 1; i < ELEMENTS; i++) {
+				buffer[i] = nextLine[i];
+			}
+			
+			
+			
+			//fw.flush();
+			//patientRecords.add(buffer);  //would have been better to keep adding them
+			//as the loop went on, but I discovered every time the array would grow, it would replace
+			//all of the elements appended to the array list so far with the last appended element
+			//I believe this has something to do with array list being not synchonous
+			//Attempted increasing the size manually, but then discovered there is no clean way
+			//to get the capacity of an array list in Java (unlike in C++)
+			//
+			//very, very frustrating.
+			patientRecords.add(buffer);
+			csvw.writeNext(buffer);
+			nextLine = csvr.readNext();
+			/*for(int i = 1; i < ELEMENTS; i++) {
+				buffer[i] = nextLine[i];
+				if(i < ELEMENTS - 1)
+					fw.write(buffer[i] + ", ");
+				else
+					fw.write(buffer[i]);
+				fw.flush();
+			}
+			
+			fw.write("\n");
+			nextLine = csvr.readNext();*/
+		}
+
+
+		csvr.close();
+		csvw.close();
+		fr.close();
+		fw.close();
+		//refresh records:
+		patientRecords = (ArrayList<String[]>) getRecordsFromFile(recordsFile);
+	}
+	
+	public static void method() {
+		
+		String [] toadd = new String[10];
+		for(int i = 0; i < 10; i++) {
+			
+			toadd[i] = Integer.toString(i);
+			patientRecords.add(toadd);
+		}
+		
+	}
+	
 	/**
 	 * Backs up current records file by making a copy of it and appending ".back" to the end
 	 * of its filename.
@@ -636,6 +780,10 @@ public class Patient {
 		fw.close();
 	}
 
+	public static void generateEmptyRecords() throws IOException {
+		recordsFile = new File(recordsFile.getAbsolutePath());
+		recordsFile.createNewFile();
+	}
 	//private static void writeCSV(File targetFile) throws IOException, FileNotFoundException
 
 	/**
@@ -644,10 +792,12 @@ public class Patient {
 	 * 
 	 * @param indexInArrayList
 	 * @throws IndexOutOfBoundsException
+	 * @throws IOException 
 	 * @see updateRecordsFile()
 	 */
-	public static void deleteEntry(int indexInArrayList) throws IndexOutOfBoundsException {
+	public static void deleteEntry(int indexInArrayList) throws IndexOutOfBoundsException, IOException {
 		patientRecords.remove(indexInArrayList);
+		Patient.updateRecordsFile();
 	}
 
 	/**
@@ -659,263 +809,16 @@ public class Patient {
 	 * @return an array list of string arrays corresponding to the patient records
 	 * that match the query.
 	 */
-	private static ArrayList<String[]> search(int field, String value) {
+	public static ArrayList<String[]> search(int field, String value) {
 
 		ArrayList<String[]> result = new ArrayList<String[]>();
 
 		for(int i = 0; i < patientRecords.size(); i++) {
-			if(patientRecords.get(i)[field].equals(value))
+			if(patientRecords.get(i)[field].contains(value))
 				result.add(patientRecords.get(i));
 		}
 
 		return result;
 	}
-
-	//driver method, only used for testing
-	@Deprecated
-	public static void driver() {
-
-		//initialize static data:
-		try {
-			Patient.initialize();
-			//if failed attempt to recover by restory standard backup file
-			//would be nice if user could set custom backup file path but 
-			//probably won't happen in time available
-		} catch (FileNotFoundException e) {
-
-			e.printStackTrace();
-			try {
-
-				Patient.restorePreviousFile(new File("patient_records"));
-				System.out.println("Restored backup succesfully.");	
-			} catch (IOException e1) {
-				e1.printStackTrace();
-				System.exit(1);
-			}
-		} catch (IOException e) {
-
-			e.printStackTrace();
-			try {
-
-				Patient.restorePreviousFile(new File("patient_records"));
-				System.out.println("Restored backup succesfully.");	
-			} catch (IOException e1) {
-				e1.printStackTrace();
-				System.exit(1);
-			}
-		}
-
-		System.out.println("Initialization succeeded without error on default file.");
-
-		//attempt to modify the record list:
-		Patient.deleteEntry(1);
-
-		try {
-			Patient.updateRecordsFile();
-			Patient.reloadRecordsFromFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		System.out.println("Modified records file successfully.");
-
-		try{
-			Patient.restorePreviousFile(new File("patient_records"));
-			Patient.reloadRecordsFromFile();
-		} catch(IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		System.out.println("Restored previous version.");
-		System.out.println("\"Socrates\" occurs first at patient id:");
-		System.out.println(Patient.search(2, "Socrates").get(0)[0]);
-
-		//tested all static methods so far...
-		//testing instance:
-		//create instance:
-
-		Patient p = null;
-		try {
-			p = new Patient();
-		} catch(Exception e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		System.out.println("Successfully instantiated Patient object with patient id:");
-		System.out.println(p.patientId);
-
-		try {
-			p.setName("Pinco", "palla");
-		} catch(NameFormattingException e) {
-			System.out.println("Warning: name set with lowercase initial, proceed anyway?"
-					+ "(will proceed anyway in driver)");
-
-			p.setNameNoCheck("Pinco", "palla");
-
-		}
-		p.setAddress("Baker Street");
-		p.setAppointments("Yesterday");
-		p.setBilling("none");
-		p.setComments("is weird");
-		p.setCondition("Hypochondriac");
-
-		try {
-			//p.setconditionPictures("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
-			p.setConditionURL("http://www.nhs.uk/conditions/hypochondria/Pages/Introduction.aspx");
-			p.setPatientPicture("http://media.makeadare.com/img/6160cf6aa/image_bceabb1299.jpg");
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		try{ 
-			p.setDOB("notadate");
-		} catch (ParseException e) {
-			try {
-				p.setDOB("99/99/9999");
-			} catch(ParseException ex) {
-				ex.printStackTrace();
-			}
-		}
-		try {
-			p.setEmergencyPhone("notanumber");
-		} catch(Exception e) {
-			try { 
-				p.setEmergencyPhone("9999999999");
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
-		}
-		p.addRecord();
-
-		System.out.println("New patient created:");
-		for(int i = 0; i < Patient.patientRecords.get(2).length; i++) {
-			System.out.print(Patient.patientRecords.get(2)[i] + ", ");
-		}
-		System.out.println();
-		
-		
-		
-		//Separate test for conditionPictures adders:
-		System.out.println("First adders test:");
-		try {
-			p.addConditionPicture("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
-		} catch (MalformedURLException e) {
-			
-			System.err.println("Failed to add URL");
-		}
-		
-		try {
-			p.addConditionPicture(new File("download.jpg"));
-		} catch (FileNotFoundException e) {
-			System.err.println("Failed to found sample file");
-		}
-		
-		System.out.println("Result:");
-		String[] split = p.conditionPictures.split(" ");
-		
-		for(int i = 0; i<split.length; i++) {
-			System.out.println("pos " + i + ": " + split[i]);
-		}
-		//This test shows that the methods can successfully recognize valid URLs and valid files.
-		
-		//Test with invalid url and invalid file path:
-
-		System.out.println("Second adders test:");
-		try {
-			p.addConditionPicture("mages.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg");
-		} catch (MalformedURLException e) {
-			
-			System.err.println("Failed to add URL");
-		}
-		
-		try {
-			p.addConditionPicture(new File("download.BROKEN"));
-		} catch (FileNotFoundException e) {
-			System.err.println("Failed to found sample file");
-		}
-		
-
-		System.out.println("Result:");
-		
-		split = p.conditionPictures.split(" ");
-		
-		for(int i = 0; i<split.length; i++) {
-			System.out.println("pos " + i + ": " + split[i]);
-		}
-		//this test showed that bad URLs, files will not modify the field
-		
-		//test for well formed URL/file not pointing at a picture
-		System.out.println("Third adders test:");
-		try {
-			p.addConditionPicture("http://pastebin.com/download.php?i=A90wUvxi");
-		} catch (MalformedURLException e) {
-			
-			System.err.println("Failed to add URL");
-		}
-		
-		try {
-			p.addConditionPicture(new File("opencsv-3.6.jar"));
-		} catch (FileNotFoundException e) {
-			System.err.println("Failed to found sample file");
-		}
-		
-
-		System.out.println("Result:");
-		
-		split = p.conditionPictures.split(" ");
-		
-		for(int i = 0; i<split.length; i++) {
-			System.out.println("pos " + i + ": " + split[i]);
-		}
-		
-		//toString and toStringArr seem to be working:
-		System.out.println(p.toString());
-		
-		for(int i = 0; i < p.toStringArr().length; i++) {
-			System.out.println(p.toStringArr()[i]);
-		}
-		
-		/*Patient pat = new Patient();
-		pat.setComments("PAT");
-		Patient.editRecord(pat, 2);*/
-		//this test showed that these adder methods do not check if the provided resource is a picture
-		//so this is either something that should be fixed, or it should be delegated to the GUI
-		//Since the GUI will use a jfilechooser, this component will simply limit the acceptable file formats
-		//URLs are trickier. May just display an error icon instead of a picture where the user typed in 
-		//a valid URL that is not a picture.
-		
-		//try out String.split() to allow for multiple URLs to be stored inside a single String instance:
-		//this works, but only checks the protocol of the first string, meaning:
-		//if we split the string by " ", then only whether the first of the strings so obtained specifies a protocol matters,
-		//this is inadequate where any successive string (obtained from the split) is not a well formed URL
-		
-		//Another issue: this does not allow for filepaths, but the end user would be uploading pictures stored locally, not on 
-		//the internet.
-		/*try{
-			p.setconditionPictures("https://images.rapgenius.com/155a55a778c356240f936ed02ff46b8e.736x490x1.jpg http://media.makeadare.com/img/6160cf6aa/image_bceabb1299.jpg");
-			
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}*/
-		
-		
-		/*for(int i = 0; i<p.conditionPictureURL.split(" ").length; i++)
-			System.out.println(
-					p.conditionPictureURL.split(" ")[i]);*/
-		
-		
-		/*String[] split = p.conditionPictures.split(" ");
-		
-		for(int i = 0; i < split.length; i++) {
-			//checkURIWellformedness(split[i]); //instance method? static method? external method?
-		}*/
-		
-	}
-
-
 
 }

@@ -1,83 +1,79 @@
 package uk.ac.ucl.nterreri.GUI;
 
 import java.awt.BorderLayout;
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Vector;
-
-import javax.swing.JSeparator;
-import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-import javax.swing.JTabbedPane;
-import javax.swing.JEditorPane;
-import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.border.LineBorder;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-
-import uk.ac.ucl.nterreri.task3.Patient;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.ParseException;
 
-import javax.swing.JToggleButton;
-import javax.swing.JTextPane;
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.JEditorPane;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
+import uk.ac.ucl.nterreri.patient.Patient;
+
+/**
+ * Extends JDialog to set up frame parent-child relationship between originating MainFrame frame
+ * and patient editor frame.<p>
+ * 
+ * Sets up a JEditorPane to display a hyperlink to the location of the patient condition.<p>
+ * 
+ * Is its own Action and Hyperlink Listener to handled user clicking buttons and condition
+ * hyperlink.<p>
+ * 
+ * Holds simple nested classes (only used for the present class) to allow the user to modify
+ * patient pictures by right-clicking on them.<p>
+ * 
+ * Also displays patient pictures by resizing them to fit picture panels (WARNING: may become slow
+ * while rendering these).
+ * 
+ * @author nterreri
+ *
+ */
 public class PatientEditorFrame extends JDialog implements ActionListener, HyperlinkListener {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8708149947882606477L;
 	private Patient patient;
 	private int indexInArrayList;
 	private JPanel contentPane;
@@ -96,9 +92,10 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 	private JScrollPane scrollPaneAppointments;
 	private JScrollPane scrollPaneBilling;
 	private JScrollPane scrollPaneComments;
-	JTabbedPane tabbedPane;		//<- has to be visible from JDialog generated from this frame
+	JTabbedPane tabbedPane;		//<- has to be visible from JDialog generated from this frame (on second though, should have made getters, no time now)
 	private JPanel panelPatientPic;
 	private JPanel panelConditionPic;
+	@SuppressWarnings("rawtypes")
 	JComboBox comboBox;			//<- has to be visible from JDialog generated from this frame
 	PicturePopupMenu popupMenu;	//<- has to be visible from JDialog generated from this frame
 	JLabel lblPatientPic;		//<- has to be visible from JDialog generated from this frame
@@ -109,6 +106,7 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 
 	/**
 	 * Launch the application.
+	 * debug only
 	 */
 	/*public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -124,26 +122,50 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 	}*/
 
 	/**
-	 * Create the frame.
-	 * @wbp.parser.constructor
+	 * The constructor relies on the class parent JDialog constructor to establish parent-child relationship between
+	 * MainFrame instance and any (finite) number of EditorFrame JDialogs. So that if the MainFrame instance is closed,
+	 * so are all the EditorFrames.<p>
+	 *
+	 * @param parent
+	 * @param patient
 	 */
-
-
-	//the constructors call the jdialog constructor to establish parent-child relationship between mainframe and any (finite) number of
-	//editorframe jdialogs.
 	public PatientEditorFrame(JFrame parent, Patient patient) {
 		super(parent);
-		//setModalityType(Dialog.ModalityType.MODELESS); //In vain attempted to make parent jframe focus shift parent on top of children, see http://stackoverflow.com/questions/22259765/how-to-make-a-jdialog-not-always-on-top-of-parent
-		this.indexInArrayList = -1;
+		/*In vain attempted to make parent jframe focus shift parent on top of children, 
+		 * see http://stackoverflow.com/questions/22259765/how-to-make-a-jdialog-not-always-on-top-of-parent
+		 * PatientEditorFrame should be a jdialog in order to establish parent-child frame relationship between 
+		 * instances of this class and their originating MainFrame, so that if the MainFrame is closed,
+		 * all of them are also closed.
+		//setModalityType(Dialog.ModalityType.MODELESS);this.indexInArrayList = -1;*/
+
 		this.patient = patient;
+		this.indexInArrayList = -1;
 
 		initialize();
 
 	}
 
+	
+	/**
+	 * The constructor relies on the class parent JDialog constructor to establish parent-child relationship between
+	 * MainFrame instance and any (finite) number of EditorFrame JDialogs. So that if the MainFrame instance is closed,
+	 * so are all the EditorFrames.<p>
+	 * 
+	 * Variant receiving an index in Patient.patientRecords from the selected item in a JTable view in MainFrame.<p>
+	 * 
+	 * @param parent
+	 * @param patient
+	 * @param indexInArrayList
+	 */
 	public PatientEditorFrame(JFrame parent, Patient patient, int indexInArrayList) {
 		super(parent);
-		//setModalityType(Dialog.ModalityType.MODELESS); //In vain attempted to make parent jframe focus shift parent on top of children, see http://stackoverflow.com/questions/22259765/how-to-make-a-jdialog-not-always-on-top-of-parent
+		/*In vain attempted to make parent jframe focus shift parent on top of children, 
+		 * see http://stackoverflow.com/questions/22259765/how-to-make-a-jdialog-not-always-on-top-of-parent
+		 * PatientEditorFrame should be a jdialog in order to establish parent-child frame relationship between 
+		 * instances of this class and their originating MainFrame, so that if the MainFrame is closed,
+		 * all of them are also closed.
+		//setModalityType(Dialog.ModalityType.MODELESS);this.indexInArrayList = -1;*/
+
 		this.indexInArrayList = indexInArrayList;
 		this.patient = patient;
 
@@ -151,6 +173,19 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 
 	}
 
+	
+	/**
+	 * Creates the frame and registers listeners. Mostly swing-designer generated.<p>
+	 * 
+	 * Used in constructor calls.<p>
+	 * 
+	 * Sets up a hyperlink in the condition JEditorPane.<p>
+	 * 
+	 * Calls refreshPictures() to render pictures.<p>
+	 * 
+	 * @see #refreshPictures()
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void initialize() {
 
 		mouseListener = new EditorFrameMouseListener();
@@ -228,23 +263,17 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 
 		JLabel label_2 = new JLabel("Billing:");
 
-		//credit TODO:http://stackoverflow.com/questions/3693543/hyperlink-in-jeditorpane
+		//sets hyperlink in editor pane from patient.condition data
 		txtEditorCondition = new JEditorPane("text/html", "<a href=\"" + patient.getConditionURL() + "\">" + patient.getCondition() + "</a>");
 		txtEditorCondition.addHyperlinkListener(this);
 		txtEditorCondition.setEditable(false);
-		//txtEditorCondition.setBounds(19, 345, 214, 111);
 		txtEditorCondition.setBorder(textBorder);
-		//txtEditorCondition.setLineWrap(true);
-
-
 
 		scrollPaneCondition = new JScrollPane(txtEditorCondition);
 		scrollPaneCondition.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		//contentPane.add(txtAreaCondition);
 
 		txtAreaAppointments = new JTextArea();
 		txtAreaAppointments.setEditable(false);
-		//txtAreaAppointments.setBounds(251, 345, 249, 111);
 		txtAreaAppointments.setBorder(textBorder);
 		txtAreaAppointments.setLineWrap(true);
 		scrollPaneAppointments = new JScrollPane(txtAreaAppointments);
@@ -252,7 +281,6 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 
 		txtAreaComments = new JTextArea();
 		txtAreaComments.setEditable(false);
-		//txtAreaComments.setBounds(526, 311, 287, 255);
 		txtAreaComments.setBorder(textBorder);
 		txtAreaComments.setLineWrap(true);
 		scrollPaneComments= new JScrollPane(txtAreaComments);
@@ -269,7 +297,6 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 		lblPatientPic.setHorizontalAlignment(SwingConstants.CENTER);
 		lblPatientPic.setIcon(null);
 		panelPatientPic.add(lblPatientPic);
-		//tabbedPane.addTab("Patient Pic", null, lblPatientPic, null);
 
 		panelConditionPic = new JPanel();
 		tabbedPane.addTab("Condition Pic", null, panelConditionPic, null);
@@ -287,12 +314,10 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 
 		txtAreaBilling = new JTextArea();
 		txtAreaBilling.setEditable(false);
-		//txtAreaBilling.setBounds(19, 490, 214, 88);
 		txtAreaBilling.setBorder(textBorder);
 		txtAreaBilling.setLineWrap(true);
 		scrollPaneBilling= new JScrollPane(txtAreaBilling);
 		scrollPaneBilling.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		//contentPane.add(scrollPaneComments);
 
 		comboBox = new JComboBox();
 		comboBox.setModel(fetchComboBoxModel());
@@ -470,14 +495,19 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 
 	}
 
+	
+	/**
+	 * Calls drawPicture() to scale picture to picture pane.
+	 * Displays error if failed.
+	 * 
+	 * @see #drawPicture(String, JPanel)
+	 */
 	private void refreshPictures() {
 		try {
 			if(!( patient.getPatientPicture() == null || patient.getPatientPicture().length() == 0 ))
 				drawPicture(patient.getPatientPicture(), panelPatientPic);	//draws patient profile picture image and scales to tabbedPane size
-				//drawPicture(patient.getPatientPicture(), lblPatientPic);
 			if(patient.getConditionPictures() != null) 
 				drawPicture(patient.getConditionPictures()[0], panelConditionPic);	//draws patient profile picture image and scales to tabbedPane size
-				//drawPicture(patient.getConditionPictures()[0], lblConditionPic);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(this, (Object)("Unable to load one or more images\n"
 					+ "Some pictures will not be displayed"),
@@ -485,19 +515,38 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 		}		
 	}
 
-
+	
+	/**
+	 * 
+	 * @return the combobox model based on the content of patient.conditionPictures
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	DefaultComboBoxModel fetchComboBoxModel() {
 		DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
 		//comboBoxModel.addElement("- Select Condition Pic -");	//removed coaching to extract an index for the condition pic
 
-		String[] restOfModel = patient.getConditionPictures();
+		String[] model = patient.getConditionPictures();
 
-		if(restOfModel != null)	//restOfModel will be null where there are no condition pics
-			for(int i = 0; i < restOfModel.length; i++)
-				comboBoxModel.addElement(restOfModel[i]);
+		if(model != null)	//restOfModel will be null where there are no condition pics
+			for(int i = 0; i < model.length; i++)
+				comboBoxModel.addElement(model[i]);
 
 		return comboBoxModel;
 	}
+
+	
+	/**
+	 * Action performed implementation to listen for Toggle Edit Mode button, Save Button and combo box
+	 * user action.<p>
+	 * 
+	 * The first adds/removes editable flags from text fields and panes, and mouse
+	 * listeners from the picture panes.<p>
+	 * 
+	 * The second, updates the values in the current patient instance with the data in the 
+	 * text fields and the Strings recording the URIs of the pictures.<p>
+	 * 
+	 * Then updates on-file patient records through Patient class static method.
+	 */
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -528,7 +577,7 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 				textPhone.setEditable(false);
 				textAddress.setEditable(false);
 				textCURLOverride.setEditable(false);
-				//txtEditorCondition.setEditable(false);
+				//txtEditorCondition.setEditable(false); see below
 				txtAreaAppointments.setEditable(false);
 				txtAreaComments.setEditable(false);
 				txtAreaBilling.setEditable(false);
@@ -551,7 +600,6 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 			}
 
 		} else if(e.getSource() == btnSaveButton) {
-			//String errorMessage = "";
 
 			try {
 				patient.setLastNameNoCheck(textLastName.getText());
@@ -592,7 +640,7 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 			/*if(errorMessage.length() > 1)
 				JOptionPane.showMessageDialog(this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);*/
 
-		} else if((e.getSource() == comboBox)/* && (comboBox.getSelectedIndex() != 0)*/) {
+		} else if(e.getSource() == comboBox) {
 			try {
 				drawPicture((String)comboBox.getSelectedItem(), lblConditionPic);
 			} catch (Exception excp) {
@@ -608,20 +656,15 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 	//felt like placing this in a separate class would fragment the source code when this is only needed within the present
 	//Jdialog extension
 	//https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html
+
+	
+	/**
+	 * Nested MouseListener class to popup a mousedrop menu when user right clicks
+	 * a pticure pane when in editor mode.
+	 * 
+	 * @author nterreri
+	 */
 	private class EditorFrameMouseListener extends MouseAdapter {
-
-		/*@Override
-		public void mouseClicked(MouseEvent e) {
-			//Object [] options = {"From file", "From URL", "Cancel" };
-
-			//JOptionPane.showOptionDialog(PatientEditorFrame.this, "How would you like to change the picture:", "Picture Source Selection", 
-			//		JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-
-			//TODO credit: http://stackoverflow.com/questions/1816458/getting-hold-of-the-outer-class-object-from-the-inner-class-object
-			/*EditorPicChooser dialog = new EditorPicChooser(PatientEditorFrame.this, e.getComponent(), patient);
-			dialog.setVisible(true);
-			
-		}*/
 
 		@Override
 		public void mousePressed(MouseEvent e) {
@@ -639,6 +682,12 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 
 		}
 
+		/**
+		 * Creates a popup menu with different text based on whether the user clicked
+		 * on the profile pic pane or the condition pic pane.
+		 * 
+		 * @param e
+		 */
 		private void popUp(MouseEvent e){
 			popupMenu.source = e.getComponent();
 
@@ -651,14 +700,24 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 			popupMenu.show(e.getComponent(), e.getX(), e.getY());
 		}
 
-		/*public PatientEditorFrame getOuter() {
-			return PatientEditorFrame.this;
-		}*/
-
 	}
-
+	
+	
+	/**
+	 * PicturePopUpMenu inner class.
+	 *<p>
+	 *Defines what happens on user right mouse clicking on the picture pane.
+	 *<p>
+	 *Constructs an EditorPicChooser dialog for user to select a picture from either file
+	 *or specifying a URL.
+	 *
+	 * @author nterreri
+	 *
+	 */
 	class PicturePopupMenu extends JPopupMenu implements ActionListener {
 
+		
+		private static final long serialVersionUID = -7050098197854826112L;
 		Component source;
 		JMenuItem itemAdd;
 		JMenuItem itemRemove;
@@ -675,17 +734,23 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 			add(itemRemove);
 		}
 
+		/**
+		 * Constructs an EditorPicChooser for user to select a file.
+		 * Also handles picture removal through patient.removeXXXPicture()
+		 * Finally refreshes the combobox model.
+		 */
+		@SuppressWarnings("unchecked")
 		@Override
 		public void actionPerformed(ActionEvent e) {
 
 			if(e.getSource() == itemAdd) {
 				EditorPicChooser dialog = new EditorPicChooser(PatientEditorFrame.this, source, patient); //should change to "getInstance()" or similar
 				dialog.setVisible(true);
-				
+
 
 			} else if(e.getSource() == itemRemove) {
 				if(JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(PatientEditorFrame.this, "Remove picture?", "Confirm", JOptionPane.OK_CANCEL_OPTION)) {
-					
+
 					//add option to remove profile pic
 					if(source == lblConditionPic) {
 						patient.removeConditionPicture(comboBox.getSelectedIndex());
@@ -696,12 +761,12 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 						//set blank label:
 						lblPatientPic.setIcon(null);
 					}
-					
+
 					/*lblPatientPic = new JLabel();
 					lblPatientPic.setHorizontalAlignment(SwingConstants.CENTER);
 					panelPatientPic.add(lblPatientPic);*/
 
-					
+
 					//update combobox model:
 					comboBox.setModel(fetchComboBoxModel());
 				}
@@ -709,71 +774,19 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 		}
 	}
 
-	@Deprecated
-	private void drawPictures() {
-
-		//completely broken
-		try {
-			//drawPicture(patient.getPatientPicture(), panelPatientPic);//broken
-		} catch (Exception e) {		
-			//e.printStackTrace();//debug
-			JOptionPane.showMessageDialog(this, (Object)("Unable to load profile image\n"
-					+ "No patient picture will be displayed"),
-					"Error loading image", JOptionPane.WARNING_MESSAGE);
-		}
-
-		try {
-			//drawPicture(patient.getConditionPictures()[0], panelConditionPic);//broken
-		} catch (Exception e) {		
-			//e.printStackTrace();//debug
-			JOptionPane.showMessageDialog(this, (Object)("Unable to load condition image\n"
-					+ "Some condition pictures will not be displayed"),
-					"Error loading image", JOptionPane.WARNING_MESSAGE);
-		}
-
-
-		/*String [] conditionPictures = patient.getConditionPictures();
-		boolean allPicsLoaded = true;
-		for(int i = 0; i < conditionPictures.length; i++ ) {
-
-			try {
-				drawPicture(conditionPictures[i], panelConditionPic);
-			} catch (Exception e) {					
-				e.printStackTrace();
-				allPicsLoaded = false;
-			}
-		}
-
-		if(!allPicsLoaded) {
-			JOptionPane.showMessageDialog(this, (Object)("Unable to load some condition images\n"
-					+ "Some condition pictures will not be displayed"),
-					"Error loading image", JOptionPane.WARNING_MESSAGE);
-		}*/
-
-	}
-
-	//earlier version
-	/*void drawPicture(String source, JComponent component) throws Exception {
-		//TODO: credit http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing
-		//TODO: and credit http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
-
-		Image img = ImageIO.read(new URL(source));			//<-this may throw an IOException or MalformedURLException
-		BufferedImage resizedImg = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g2 = resizedImg.createGraphics();
-
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-		g2.drawImage(img, 0, 0, component.getWidth(), component.getHeight(), null);
-		g2.dispose();
-
-		((JLabel)component.getComponent(0)).setIcon(new ImageIcon(resizedImg));
-
-
-	}*/
 	
-
+	/**
+	 * Attempts to resize the image from the provided url to properly fit into the picture pane.
+	 * Must take a JPanel component when creating the frame.<p>
+	 * 
+	 * @param source
+	 * @param component
+	 * @throws Exception
+	 * @see #drawPicture(String, JLabel)
+	 * @see http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing		
+	 * @see http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
+	 */
 	void drawPicture(String source, JPanel component) throws Exception {
-		//TODO: credit http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing
-		//TODO: and credit http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
 
 		Image img = ImageIO.read(new URL(source));			//<-this may throw an IOException or MalformedURLException
 		BufferedImage resizedImg = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -783,14 +796,23 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 		g2.drawImage(img, 0, 0, component.getWidth(), component.getHeight(), null);
 		g2.dispose();
 
+		//cast JPanel to JLabel:
 		((JLabel)component.getComponent(0)).setIcon(new ImageIcon(resizedImg));
-
-
 	}
+
 	
+	/**
+	 * Attempts to resize the image from the provided url to properly fit into the picture pane.
+	 * Uses JLabel directly after the frame has been created to avoid AWT threading issues (see drawPicture(String, JPanel).<p>
+	 * 
+	 * @param source
+	 * @param component
+	 * @throws Exception
+	 * @see #drawPicture(String, JPanel)
+	 * @see http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing		
+	 * @see http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
+	 */
 	void drawPicture(String source, JLabel component) throws Exception {
-		//TODO: credit http://stackoverflow.com/questions/8333802/displaying-an-image-in-java-swing
-		//TODO: and credit http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
 
 		Image img = ImageIO.read(new URL(source));			//<-this may throw an IOException or MalformedURLException
 		BufferedImage resizedImg = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -801,13 +823,14 @@ public class PatientEditorFrame extends JDialog implements ActionListener, Hyper
 		g2.dispose();
 
 		component.setIcon(new ImageIcon(resizedImg));
-
-
 	}
-
-
-	//TODO: http://stackoverflow.com/questions/10967451/open-a-link-in-browser-with-java-button
-	//TODO: http://stackoverflow.com/questions/3693543/hyperlink-in-jeditorpane
+	
+	
+	/**
+	 * Attempts to open user browser when clicking on hyperlink in JEditorPane.
+	 * Note: link is only clickable when EditorPane editable flag is set to false (see JEditorPane javadoc),
+	 * so the link is only clickable when editor mode is toggled off.
+	 */
 	@Override
 	public void hyperlinkUpdate(HyperlinkEvent e) {
 		if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {

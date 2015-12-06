@@ -1,50 +1,77 @@
 package uk.ac.ucl.nterreri.GUI;
 
-import java.awt.BorderLayout;
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
-import com.opencsv.CSVReader;
-
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.JPasswordField;
-import javax.swing.BoxLayout;
-import javax.swing.SwingConstants;
-import javax.swing.JSeparator;
 import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 
+import com.opencsv.CSVReader;
+
+/**
+ * GUI frame to access the patient management system. <p>
+ * 
+ * Prompts user for input and only allows access if user enters correct login details.<p>
+ * 
+ * Closes the program if it is unable to retrieve login data from file.<p>
+ * 
+ * Implements ActionListener to be the listener to its own components.<p>
+ * 
+ * @author nterreri
+ *
+ */
 public class LoginFrame extends JFrame implements ActionListener {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4806215415944464740L;
+	//GUI components:
 	private JPanel contentPane;
 	private JTextField usernameField;
 	private JPasswordField passwordField;
 	private ArrayList<String[]> loginData;
+	private JButton btnLogIn;
+	
 	private String usernameIn;
 	private String passwordIn;
-	private JButton btnLogIn;
-	private static boolean success = false;
-
+	private static boolean success = false;	//login outcome flag
+	
+	/**private static boolean instanceExists = false;
+	private static LoginFrame instance;
 	/**
-	 * Create the frame.
+	 * Very rough get instance method. 
+	 * 
+	 * Unused. But if the constructor were private for secutrity
+	 * reasons, it would make sense to use it.
+	 * 
+	 * @return
+	 */
+	/*public LoginFrame getInstance() {
+		if(instanceExists)
+			return instance;
+		else
+			return new LoginFrame();
+	}*/
+	
+	/**
+	 * Reads loginData from file, then creates the frame.
+	 * 
+	 * @see #fetchLoginData()
 	 */
 	public LoginFrame() {
 		
@@ -79,12 +106,6 @@ public class LoginFrame extends JFrame implements ActionListener {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
-		//debug
-		for(int i = 0; i < loginData.size(); i++) {
-			for(int j = 0; j<2; j++)
-				System.out.println(loginData.get(i)[j]);
-		}
 		
 		//create the frame(mostly swing-designer-generated):
 		createFrame();
@@ -94,7 +115,10 @@ public class LoginFrame extends JFrame implements ActionListener {
 		passwordField.addActionListener(this);
 		btnLogIn.addActionListener(this);	
 	}
-
+	
+	/**
+	 * Designer-generated create frame method.
+	 */
 	private void createFrame() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 280, 252);
@@ -147,11 +171,26 @@ public class LoginFrame extends JFrame implements ActionListener {
 		
 	}
 	
+	/**
+	 * Reads login data from file.<p>
+	 * 
+	 * Uses opencsv.
+	 * 
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @see http://opencsv.sourceforge.net/
+	 */
 	private static List<String[]> fetchLoginData() throws FileNotFoundException, IOException{
-		CSVReader reader = new CSVReader(new FileReader("login_data"));
+		@SuppressWarnings("resource")
+		CSVReader reader = new CSVReader(new FileReader(System.getProperty("user.dir") + "/login_data"));
 		return reader.readAll();
 	}
 
+	/**
+	 * 
+	 * @return true if the login succeeded, false otherwise
+	 */
 	private boolean validateLogin() {
 		//assume login is going to fail:
 		boolean result = false;
@@ -170,10 +209,20 @@ public class LoginFrame extends JFrame implements ActionListener {
 		return result;
 	}
 
+	/**
+	 * Private field accessor.
+	 * 
+	 * @return the value of the success field.
+	 */
 	public static boolean getOutcome() {
 		return success;
 	}
 	
+	/**
+	 * actionPerformed override.<p>
+	 * 
+	 * Reacts to user-action events.
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
@@ -185,9 +234,9 @@ public class LoginFrame extends JFrame implements ActionListener {
 			/* dispose() triggers a window event caught by this frame (the frame catches its own
 			* closing event, a check to static boolean success is performed to decide whether
 			* to allow the user to proceed to the patient records management frame*/
+		} else {
+			JOptionPane.showMessageDialog(null, "Login failed");
 		}
-		
-		JOptionPane.showMessageDialog(null, "Login failed");
 	}
 	
 }

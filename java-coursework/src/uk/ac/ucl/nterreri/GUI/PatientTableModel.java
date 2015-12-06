@@ -2,31 +2,64 @@ package uk.ac.ucl.nterreri.GUI;
 
 import javax.swing.table.DefaultTableModel;
 
-import uk.ac.ucl.nterreri.task3.Patient;
+import uk.ac.ucl.nterreri.patient.Patient;
 
+/**
+ * JTable model for the main data view in the patient management system.<p>
+ * 
+ * Overrides DefaultTableModel methods where necessary in order to display data
+ * properly.<p>
+ * 
+ * @author nterreri
+ *
+ */
 public class PatientTableModel extends DefaultTableModel {
 
-	//TODO: http://stackoverflow.com/questions/1990817/how-to-make-a-jtable-non-editable
+
+	/**
+	 * 
+	 */
+	
+	private static final long serialVersionUID = -5686547607142976924L;
+
+	/**
+	 * Makes all cells not editable.
+	 * 
+	 * @see http://stackoverflow.com/questions/1990817/how-to-make-a-jtable-non-editable
+	 */
 	@Override
 	public boolean isCellEditable(int row, int column) {
 		return false;
 	}
 	
+	/**
+	 * Retrieves row data from Patient.patientRecords.
+	 */
 	@Override
 	public int getRowCount() {
 		return Patient.getPatientRecords().size();
 	}
 
+	/**
+	 * Retrieves column data from Patient.ELEMENTS.
+	 */
 	@Override
 	public int getColumnCount() {
 		return Patient.ELEMENTS - 3;
 	}
 
+	/**
+	 * Retrieves cell values from Patient.patientRecords getter method.
+	 */
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		return Patient.getPatientRecords().get(rowIndex)[columnIndex];
 	}
 	
+	/**
+	 * Sets column name data according to switch statement, tailored to
+	 * current Patient class version patient fields. Will require manual update.
+	 */
 	@Override
 	public String getColumnName(int column) {
 		switch(column)

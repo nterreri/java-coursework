@@ -752,7 +752,7 @@ public class Patient {
 		CSVWriter csvw = new CSVWriter(fw);
 		
 		for(int i = 0; i < indexesInArrayList.length; i++)
-			csvw.writeNext(patientRecords.get(i));
+			csvw.writeNext(patientRecords.get(indexesInArrayList[i]));
 		csvw.flush();
 
 		csvw.close();

@@ -1,0 +1,53 @@
+ALL features implemented.
+
+1. The management system should be implemented as a java GUI application
+using frames, tables, buttons, listeners, etc.
+
+2. The practitioner should be able to login to the patient management system
+using a username/password pair.
+
+3. Register a new patient with minimal information such as name, first name,
+DOB, address, emergency phone number, medical condition, appointments,
+billing, comments, etc. Each record might contain a profile picture of the
+patient and a set of pictures describing his/her condition such as brain scans
+(please use any sample image, It doesn’t have to be realistic).
+
+4. The field containing the medical condition data should be clickable and
+pointing to a wikipedia page or any URL with the description of that condition.
+
+5. Edit an existing patient record, by editing existing information such as
+dates/times of appointments, uploading new images or deleting others.
+
+6. Delete an exiting patient record. Your program should ask for confirmation
+before deleting a record.
+
+7. Search the list of patients based on any of the stored fields, i.e., name, DOB,
+address, etc. and produce a list of corresponding records.
+
+8. (Optional) Export a list of selected patient records as a comma separated file
+or any other format.
+
+9. (Optional) Import a comma separated (or the format used in 8) file containing
+patients’ records into the system. The new patients data will be appended to
+the existing ones already stored in the management system.
+
+Additional features:
+
+10. Auto backup system: the program automatically backs up the patient records 
+inside patient_records.back and is able to automatically recover data from this
+location should the main file be deleted.
+
+11. Automatic picture resizing: the program automatically resizes pictures to completely
+fit into the small picture panels in the patient view frame. This can make it quite slow
+when pictures are very large.
+
+12. It is possible to edit/remove patients from the records also from the search view and
+not only from the main data view.
+
+13. Automatic wikipedia link override: entering a condition into the condition field will
+automatically generate a hyperlink to a wikipedia page. This link can be manually overriden
+by writing some other link into a textfield.
+
+14. Feedback: the program generates feedback for the user throughout, this is mostly comprehensive.
+
+
